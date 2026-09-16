@@ -90,7 +90,7 @@ export default function SkillGapPanel({
         </div>
 
         {/* Skill Pills */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)', minWidth: 0, maxWidth: '100%' }}>
           {matchedSkills.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)', margin: 0, fontStyle: 'italic' }}>
               No matched skills recorded yet. Complete your onboarding skills checklist.
@@ -110,10 +110,13 @@ export default function SkillGapPanel({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
+                  maxWidth: '100%',
+                  wordBreak: 'break-word',
+                  boxSizing: 'border-box',
                 }}
               >
-                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34D399' }} />
-                {skill}
+                <span style={{ width: '5px', height: '5px', minWidth: '5px', borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />
+                <span style={{ wordBreak: 'break-word' }}>{skill}</span>
               </span>
             ))
           )}
@@ -199,7 +202,7 @@ export default function SkillGapPanel({
         </div>
 
         {/* Skill Pills */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid #F3F4F6' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid #F3F4F6', minWidth: 0, maxWidth: '100%' }}>
           {missingSkills.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: '#059669', margin: 0, fontWeight: 600 }}>
               🎉 Zero skill gaps! You meet 100% of the core competencies for this role.
@@ -219,10 +222,13 @@ export default function SkillGapPanel({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
+                  maxWidth: '100%',
+                  wordBreak: 'break-word',
+                  boxSizing: 'border-box',
                 }}
               >
-                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#FB7185' }} />
-                {skill}
+                <span style={{ width: '5px', height: '5px', minWidth: '5px', borderRadius: '50%', background: '#FB7185', flexShrink: 0 }} />
+                <span style={{ wordBreak: 'break-word' }}>{skill}</span>
               </span>
             ))
           )}

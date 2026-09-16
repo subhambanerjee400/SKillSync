@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * SkillBridge Deterministic Skill Roadmap Engine
+ * SkillSync Deterministic Skill Roadmap Engine
  * ============================================================================
  * 
  * Generates an ordered, step-based learning path towards full role readiness,

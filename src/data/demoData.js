@@ -278,7 +278,7 @@ export const INDUSTRY_TALENT_POOL = [
 ];
 
 // =========================================================
-// SkillBridge Core Reference Data (Role-Skill Matrix)
+// SkillSync Core Reference Data (Role-Skill Matrix)
 // =========================================================
 
 export const ROLE_REQUIRED_SKILLS = {

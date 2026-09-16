@@ -104,7 +104,7 @@ export default function Signup() {
             Create Your Account
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-            Get started with SkillBridge
+            Get started with SkillSync
           </p>
         </div>
 

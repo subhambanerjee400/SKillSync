@@ -62,13 +62,13 @@ async function run() {
   // Setup mock session
   const mockUser = {
     id: 'usr_debug_375',
-    email: 'debug@skillbridge.test',
+    email: 'debug@skillsync.test',
     user_metadata: { full_name: 'Debug User', role: 'user' },
   };
   const mockProfile = {
     id: 'usr_debug_375',
     name: 'Debug User',
-    email: 'debug@skillbridge.test',
+    email: 'debug@skillsync.test',
     role: 'Frontend Developer',
     segment: 'Software',
     location: 'San Francisco, CA',

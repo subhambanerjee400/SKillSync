@@ -67,7 +67,7 @@ export default function Sidebar({
               <Sparkles size={20} color="#34D399" />
             </div>
             <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
-              Skill<span style={{ color: '#0E4A32' }}>Bridge</span>
+              Skill<span style={{ color: '#0E4A32' }}>Sync</span>
             </span>
           </div>
 
@@ -254,7 +254,7 @@ export default function Sidebar({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
           <ShieldCheck size={16} color="#34D399" />
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#A7F3D0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            SkillBridge Pro
+            SkillSync Pro
           </span>
         </div>
         <p style={{ fontSize: '0.8125rem', color: '#E2E8F0', lineHeight: 1.4, margin: '0 0 0.85rem 0' }}>

@@ -393,7 +393,7 @@ export default function Onboarding() {
               letterSpacing: '-0.02em',
             }}
           >
-            Welcome to SkillBridge
+            Welcome to SkillSync
           </h1>
           <p style={{ fontSize: '0.925rem', color: '#64748b', margin: 0 }}>
             Let's set up your profile to tailor your skill readiness pathway.
@@ -762,9 +762,12 @@ export default function Onboarding() {
                       borderRadius: '16px',
                       fontSize: '0.8125rem',
                       fontWeight: 600,
+                      maxWidth: '100%',
+                      wordBreak: 'break-word',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    <span>{skill}</span>
+                    <span style={{ wordBreak: 'break-word' }}>{skill}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
@@ -776,6 +779,7 @@ export default function Onboarding() {
                         padding: 0,
                         display: 'flex',
                         alignItems: 'center',
+                        flexShrink: 0,
                       }}
                     >
                       <X size={14} />
@@ -801,7 +805,7 @@ export default function Onboarding() {
             )}
 
             {/* Custom Skill Input */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', minWidth: 0, maxWidth: '100%' }}>
               <input
                 type="text"
                 value={customSkillInput}
@@ -815,6 +819,7 @@ export default function Onboarding() {
                 placeholder="Add custom skill (press Enter)..."
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   minHeight: '44px',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.85rem',
@@ -841,6 +846,7 @@ export default function Onboarding() {
                   fontWeight: 600,
                   color: '#334155',
                   cursor: 'pointer',
+                  flexShrink: 0,
                 }}
               >
                 <Plus size={15} />
@@ -861,7 +867,7 @@ export default function Onboarding() {
               >
                 Suggested for {role}:
               </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', minWidth: 0, maxWidth: '100%' }}>
                 {roleSuggestions.map((suggestion) => {
                   const isSelected = skills.includes(suggestion);
                   return (
@@ -882,10 +888,14 @@ export default function Onboarding() {
                         alignItems: 'center',
                         gap: '0.3rem',
                         transition: 'all 0.1s ease',
+                        maxWidth: '100%',
+                        wordBreak: 'break-word',
+                        textAlign: 'left',
+                        boxSizing: 'border-box',
                       }}
                     >
-                      {isSelected && <CheckCircle2 size={13} color="#10b981" />}
-                      <span>{suggestion}</span>
+                      {isSelected && <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />}
+                      <span style={{ wordBreak: 'break-word' }}>{suggestion}</span>
                     </button>
                   );
                 })}

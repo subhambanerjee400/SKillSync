@@ -743,7 +743,7 @@ export default function SkillDetailModal({
           }}
         >
           <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-            Deterministic alignment matrix • SkillBridge
+            Deterministic alignment matrix • SkillSync
           </span>
           <button
             type="button"

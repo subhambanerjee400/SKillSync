@@ -196,6 +196,9 @@ export default function Dashboard() {
         background: '#F4F6F8',
         fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: '#111827',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
       }}
     >
       {/* 1. Left Sidebar (Desktop Static) */}
@@ -216,7 +219,7 @@ export default function Dashboard() {
       />
 
       {/* 2. Main Content Canvas */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
         {/* Top Bar (Donezo search bar, notifications, user profile) */}
         <header
           className="dashboard-header"
@@ -231,10 +234,13 @@ export default function Dashboard() {
             position: 'sticky',
             top: 0,
             zIndex: 30,
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
           {/* Left: Mobile Hamburger & Search Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: '420px', minWidth: 0, marginRight: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, maxWidth: '420px', minWidth: 0, marginRight: '0.75rem' }}>
             {/* Mobile Hamburger Toggle Button */}
             <button
               type="button"
@@ -405,7 +411,7 @@ export default function Dashboard() {
                 }}
               />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827', lineHeight: 1.2, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {userName}
                 </span>
                 <span className="hide-mobile" style={{ fontSize: '0.75rem', color: '#6B7280', lineHeight: 1.2 }}>

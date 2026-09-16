@@ -372,7 +372,7 @@ export default function EditProfile() {
           </div>
           <div>
             <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-              Skill<span style={{ color: '#0E4A32' }}>Bridge</span>
+              Skill<span style={{ color: '#0E4A32' }}>Sync</span>
             </span>
             <span
               style={{
@@ -721,9 +721,12 @@ export default function EditProfile() {
                         borderRadius: '16px',
                         fontSize: '0.8125rem',
                         fontWeight: 600,
+                        maxWidth: '100%',
+                        wordBreak: 'break-word',
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <span>{skill}</span>
+                      <span style={{ wordBreak: 'break-word' }}>{skill}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill(skill)}
@@ -735,6 +738,7 @@ export default function EditProfile() {
                           padding: 0,
                           display: 'flex',
                           alignItems: 'center',
+                          flexShrink: 0,
                         }}
                       >
                         <X size={14} />
@@ -760,7 +764,7 @@ export default function EditProfile() {
               )}
 
               {/* Custom Skill Input */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', minWidth: 0, maxWidth: '100%' }}>
                 <input
                   type="text"
                   value={customSkillInput}
@@ -774,12 +778,15 @@ export default function EditProfile() {
                   placeholder="Add custom skill (press Enter)..."
                   style={{
                     flex: 1,
+                    minWidth: 0,
+                    minHeight: '44px',
                     padding: '0.55rem 0.75rem',
                     fontSize: '0.85rem',
                     border: '1px solid #cbd5e1',
                     borderRadius: '6px',
                     outline: 'none',
                     color: '#0f172a',
+                    boxSizing: 'border-box',
                   }}
                 />
                 <button
@@ -789,6 +796,7 @@ export default function EditProfile() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.25rem',
+                    minHeight: '44px',
                     padding: '0.55rem 0.85rem',
                     background: '#f1f5f9',
                     border: '1px solid #cbd5e1',
@@ -797,6 +805,7 @@ export default function EditProfile() {
                     fontWeight: 600,
                     color: '#334155',
                     cursor: 'pointer',
+                    flexShrink: 0,
                   }}
                 >
                   <Plus size={15} />
@@ -817,7 +826,7 @@ export default function EditProfile() {
                 >
                   Suggested for {role}:
                 </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', minWidth: 0, maxWidth: '100%' }}>
                   {roleSuggestions.map((suggestion) => {
                     const isSelected = skills.includes(suggestion);
                     return (
@@ -838,10 +847,14 @@ export default function EditProfile() {
                           alignItems: 'center',
                           gap: '0.3rem',
                           transition: 'all 0.1s ease',
+                          maxWidth: '100%',
+                          wordBreak: 'break-word',
+                          textAlign: 'left',
+                          boxSizing: 'border-box',
                         }}
                       >
-                        {isSelected && <CheckCircle2 size={13} color="#10b981" />}
-                        <span>{suggestion}</span>
+                        {isSelected && <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />}
+                        <span style={{ wordBreak: 'break-word' }}>{suggestion}</span>
                       </button>
                     );
                   })}

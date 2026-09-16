@@ -135,7 +135,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                 }}
               >
                 {/* Icon & Details */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0, paddingRight: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
                   <div
                     style={{
                       width: '40px',
@@ -146,6 +146,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      flexShrink: 0,
                     }}
                   >
                     <IconComponent size={18} color={theme.color} />

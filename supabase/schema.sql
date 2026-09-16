@@ -1,6 +1,6 @@
--- =========================================================
--- SkillBridge Minimal Normalized Database Schema for Supabase
--- =========================================================
+-- ============================================================================
+-- SkillSync Minimal Normalized Database Schema for Supabase
+-- ============================================================================
 
 -- Clean up any previous unnormalized or obsolete tables/triggers
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

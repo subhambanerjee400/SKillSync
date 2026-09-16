@@ -14,7 +14,7 @@ export default function InstitutionDashboardPreview() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
       <header style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '1rem clamp(1rem, 4vw, 3rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}><span style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: '#0e4a32' }}><Building2 size={19} color="#fff" /></span><strong>SkillBridge</strong><span style={{ color: '#64748b' }}>Institution portal</span></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}><span style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: '#0e4a32' }}><Building2 size={19} color="#fff" /></span><strong>SkillSync</strong><span style={{ color: '#64748b' }}>Institution portal</span></div>
         <button type="button" onClick={handleLogout} style={{ color: '#475569', display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}><LogOut size={16} />Sign out</button>
       </header>
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '2rem clamp(1rem, 4vw, 2.5rem)' }}>

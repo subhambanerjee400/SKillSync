@@ -1,4 +1,4 @@
-// Curated learning pathways and training recommendations for SkillBridge roles
+// Curated learning pathways and training recommendations for SkillSync roles
 
 export const RECOMMENDATIONS = [
   // =========================================================

@@ -75,7 +75,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
         </div>
 
         {/* Progress Pill / Stat */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '150px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, width: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.35rem' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#111827' }}>
               {doneCount}/{totalCount}
@@ -88,6 +88,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
           <div
             style={{
               width: '100%',
+              minWidth: '120px',
               height: '6px',
               borderRadius: '9999px',
               background: '#E5E7EB',
@@ -200,6 +201,9 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 padding: '1rem',
+                minWidth: 0,
+                maxWidth: '100%',
+                boxSizing: 'border-box',
                 borderRadius: '14px',
                 border: isNext
                   ? '2px solid #0E4A32'
@@ -219,14 +223,15 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
               }}
             >
               {/* Top Node & Status */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem', minWidth: 0, flexWrap: 'wrap', gap: '0.35rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
                   {/* Circle Node */}
                   <div
                     className={isNext ? 'pulse-ring' : ''}
                     style={{
                       width: '26px',
                       height: '26px',
+                      minWidth: '26px',
                       borderRadius: '50%',
                       background: isDone ? '#0E4A32' : isNext ? '#10B981' : '#E5E7EB',
                       color: isDone || isNext ? '#FFFFFF' : '#6B7280',
@@ -269,6 +274,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                     borderRadius: '6px',
                     background: isNext ? '#DCFCE7' : isDone ? '#F0FDF4' : '#F3F4F6',
                     color: isNext ? '#065F46' : isDone ? '#0E4A32' : '#6B7280',
+                    flexShrink: 0,
                   }}
                   title={`Critical demand weight: ${step.weight}/10`}
                 >
@@ -277,7 +283,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
               </div>
 
               {/* Skill Name */}
-              <div style={{ margin: '0.25rem 0 0.5rem 0' }}>
+              <div style={{ margin: '0.25rem 0 0.5rem 0', minWidth: 0 }}>
                 <h4
                   style={{
                     fontSize: '0.9rem',
@@ -285,6 +291,8 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                     color: isDone ? '#111827' : isNext ? '#0E4A32' : '#4B5563',
                     margin: 0,
                     lineHeight: 1.25,
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
                   }}
                 >
                   {step.skill}

@@ -144,7 +144,7 @@ async function runTestFlow() {
     // FLOW 1: SOFTWARE PROFILE (Frontend Developer)
     // ------------------------------------------------------------------------
     console.log('>>> [1/2] RUNNING FULL FLOW: SOFTWARE PROFILE (Frontend Developer) <<<');
-    const softwareEmail = `alice.soft.${Date.now()}@skillbridge.test`;
+    const softwareEmail = `alice.soft.${Date.now()}@skillsync.test`;
     const password = 'TestPassword123!';
     const softwareName = 'Alice Software Dev';
 
@@ -337,7 +337,7 @@ async function runTestFlow() {
     // FLOW 2: TRADE PROFILE (Electrician)
     // ------------------------------------------------------------------------
     console.log('>>> [2/2] RUNNING FULL FLOW: TRADE PROFILE (Electrician) <<<');
-    const tradeEmail = `bob.trade.${Date.now()}@skillbridge.test`;
+    const tradeEmail = `bob.trade.${Date.now()}@skillsync.test`;
     const tradeName = 'Bob Trade Tech';
 
     // 1. Clear session and navigate to /signup

@@ -213,8 +213,8 @@ export default function SkillChart({
 
       {/* Visualization Canvas */}
       {viewMode === 'radar' ? (
-        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '380px' }}>
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible' }}>
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '320px', width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+          <svg width="100%" height="auto" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: `${size}px`, maxHeight: `${size}px`, overflow: 'visible' }}>
             {/* Concentric benchmark rings */}
             {[25, 50, 75, 100].map((level) => {
               const r = (level / 100) * radius;

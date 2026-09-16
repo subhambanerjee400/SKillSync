@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * SkillBridge Deterministic Skill-Gap Scoring Engine
+ * SkillSync Deterministic Skill-Gap Scoring Engine
  * ============================================================================
  * 
  * DESIGN PRINCIPLE FOR HACKATHON JUDGES:

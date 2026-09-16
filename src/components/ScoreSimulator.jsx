@@ -323,7 +323,7 @@ export default function ScoreSimulator({
                     alignItems: 'center',
                     gap: '0.4rem',
                     minHeight: '44px',
-                    padding: '0.5rem 0.95rem',
+                    padding: '0.5rem 0.85rem',
                     borderRadius: '9999px',
                     border: isSelected ? '1.5px solid #0E4A32' : '1px solid #E5E7EB',
                     background: isSelected ? '#0E4A32' : '#FFFFFF',
@@ -336,6 +336,10 @@ export default function ScoreSimulator({
                       : '0 1px 3px rgba(0, 0, 0, 0.02)',
                     transition: 'all 150ms ease',
                     userSelect: 'none',
+                    maxWidth: '100%',
+                    wordBreak: 'break-word',
+                    textAlign: 'left',
+                    boxSizing: 'border-box',
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
@@ -357,18 +361,20 @@ export default function ScoreSimulator({
                     style={{
                       width: '18px',
                       height: '18px',
+                      minWidth: '18px',
                       borderRadius: '50%',
                       background: isSelected ? 'rgba(255, 255, 255, 0.2)' : '#F3F4F6',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: isSelected ? '#FFFFFF' : '#6B7280',
+                      flexShrink: 0,
                     }}
                   >
                     {isSelected ? <Check size={12} strokeWidth={3} /> : <Plus size={12} />}
                   </span>
 
-                  <span>{skill}</span>
+                  <span style={{ wordBreak: 'break-word', flexShrink: 1 }}>{skill}</span>
 
                   {/* Weight / Rising pill */}
                   {weight !== undefined && (
@@ -380,6 +386,7 @@ export default function ScoreSimulator({
                         borderRadius: '6px',
                         background: isSelected ? 'rgba(255, 255, 255, 0.22)' : '#F3F4F6',
                         color: isSelected ? '#A7F3D0' : '#6B7280',
+                        flexShrink: 0,
                       }}
                     >
                       {isRising ? `+${weight} (rising)` : `+${weight}`}

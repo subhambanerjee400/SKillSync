@@ -5,7 +5,7 @@ import {
 } from '../src/lib/recommendations.js';
 import { getRequiredSkillsForRole } from '../src/data/demoData.js';
 
-console.log('=== SKILLBRIDGE FULL FLOW END-TO-END VERIFICATION ===\n');
+console.log('=== SKILLSYNC FULL FLOW END-TO-END VERIFICATION ===\n');
 
 // ----------------------------------------------------------------------------
 // TEST 1: Software Profile (Frontend Developer)

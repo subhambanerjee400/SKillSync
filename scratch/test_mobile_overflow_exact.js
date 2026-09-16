@@ -147,13 +147,13 @@ async function run() {
   // 2. Setup mock authenticated user in localStorage and check /dashboard
   const mockUser = {
     id: 'usr_test_overflow_375',
-    email: 'test.overflow@skillbridge.test',
+    email: 'test.overflow@skillsync.test',
     user_metadata: { full_name: 'Test Mobile User', role: 'user' },
   };
   const mockProfile = {
     id: 'usr_test_overflow_375',
     name: 'Test Mobile User',
-    email: 'test.overflow@skillbridge.test',
+    email: 'test.overflow@skillsync.test',
     role: 'Frontend Developer',
     segment: 'Software',
     location: 'San Francisco, CA',
