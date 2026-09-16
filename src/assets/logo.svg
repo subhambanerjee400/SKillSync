@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 44" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <!-- Icon Mark -->
+  <rect x="2" y="2" width="40" height="40" rx="10" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+  <path d="M14 24C14 19.5 17.5 16 22 16H28M28 16L24 12M28 16L24 20" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 18C30 22.5 26.5 26 22 26H16M16 26L20 30M16 26L20 22" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="22" cy="21" r="3" fill="#38BDF8"/>
+
+  <!-- Wordmark -->
+  <text x="52" y="28" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="800" font-size="21" fill="#F8FAFC" letter-spacing="-0.5">Skill<tspan fill="url(#logoGrad)">Sync</tspan></text>
+</svg>
