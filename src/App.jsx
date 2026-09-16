@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import EditProfile from './pages/EditProfile';
 import InstitutionDashboardPreview from './pages/InstitutionDashboardPreview';
 import IndustryDashboardPreview from './pages/IndustryDashboardPreview';
+import Landing from './pages/Landing';
 import { getAccountHomePath, getAccountRole } from './lib/accountRole';
 import { Loader2 } from 'lucide-react';
 
@@ -213,9 +214,9 @@ export default function App() {
           />
           <Route path="/institution-dashboard" element={<AccountRoleRoute accountRole="institution"><InstitutionDashboardPreview /></AccountRoleRoute>} />
           <Route path="/industry-dashboard" element={<AccountRoleRoute accountRole="industry"><IndustryDashboardPreview /></AccountRoleRoute>} />
-          {/* Default and catch-all routes */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Landing Page (Entry point before login/signup) */}
+          <Route path="/" element={<Landing />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
