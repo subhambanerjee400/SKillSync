@@ -572,3 +572,27 @@ select {
     justify-content: center;
   }
 }
+
+/* Recommendation Card Mobile Stacking System */
+@media (max-width: 640px) {
+  .recommendation-panel-card {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .recommendation-item-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+    padding: 1rem !important;
+  }
+
+  .recommendation-item-card .recommendation-content-wrapper {
+    width: 100% !important;
+  }
+
+  .recommendation-item-card .recommendation-cta-btn {
+    align-self: flex-start !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+}

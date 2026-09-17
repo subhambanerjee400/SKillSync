@@ -14,6 +14,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
 
   return (
     <div
+      className="recommendation-panel-card"
       style={{
         background: '#FFFFFF',
         borderRadius: '20px',
@@ -22,6 +23,9 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
         boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.04)',
         display: 'flex',
         flexDirection: 'column',
+        height: 'auto',
+        minHeight: 'fit-content',
+        boxSizing: 'border-box',
       }}
     >
       {/* Header */}
@@ -110,7 +114,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
         </div>
       ) : (
         /* Vertical list of items */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
           {recommendations.map((rec, idx) => {
             const theme = ICON_THEMES[idx % ICON_THEMES.length];
             const IconComponent = theme.icon;
@@ -118,18 +122,20 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
             return (
               <div
                 key={rec.id || idx}
+                className="recommendation-item-card"
                 style={{
                   display: 'flex',
-                  /* Allow button to wrap below the text row on narrow screens */
-                  flexWrap: 'wrap',
                   alignItems: 'center',
-                  gap: '0.65rem',
-                  padding: '0.85rem 1rem',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  padding: '1rem 1.15rem',
                   borderRadius: '14px',
                   border: '1px solid #F3F4F6',
                   background: '#FFFFFF',
-                  transition: 'all 150ms ease',
+                  height: 'auto',
+                  minHeight: 'fit-content',
                   boxSizing: 'border-box',
+                  transition: 'all 150ms ease',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = '#E5E7EB';
@@ -140,49 +146,54 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                   e.currentTarget.style.background = '#FFFFFF';
                 }}
               >
-                {/* Icon & Text — grows to fill the row, min-width:0 prevents flex blowout */}
+                {/* Icon & Text — grows to fill available space */}
                 <div
+                  className="recommendation-content-wrapper"
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    flex: '1 1 0',      /* grow & shrink; basis 0 so it shares space fairly */
-                    minWidth: '0',      /* essential: lets flex child shrink below its content size */
+                    gap: '0.85rem',
+                    flex: '1 1 0',
+                    minWidth: '0',
+                    maxWidth: '100%',
                   }}
                 >
                   {/* Coloured icon */}
                   <div
                     style={{
-                      width: '38px',
-                      height: '38px',
-                      minWidth: '38px',
+                      width: '40px',
+                      height: '40px',
+                      minWidth: '40px',
                       borderRadius: '10px',
                       background: theme.bg,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      marginTop: '1px',
+                      marginTop: '2px',
                     }}
                   >
-                    <IconComponent size={17} color={theme.color} />
+                    <IconComponent size={18} color={theme.color} />
                   </div>
 
-                  {/* Text block — must have minWidth:0 to allow text to truncate/wrap */}
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    {/* Title: single-line ellipsis with full text on hover via title attr */}
+                  {/* Text block — generous line-height for Odia ligatures, wrap mid-word break prevention */}
+                  <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    {/* Title */}
                     <h4
                       style={{
-                        fontSize: '0.875rem',
+                        fontSize: '0.9rem',
                         fontWeight: 700,
                         color: '#111827',
-                        margin: '0 0 0.15rem 0',
-                        /* Allow wrapping up to 2 lines before ellipsis */
+                        margin: '0 0 0.25rem 0',
+                        lineHeight: 1.45,
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
-                        lineHeight: 1.3,
+                        textOverflow: 'ellipsis',
                       }}
                       title={rec.title}
                     >
@@ -192,15 +203,19 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                     {rec.subtitle && (
                       <span
                         style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 1,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          fontSize: '0.72rem',
+                          fontSize: '0.75rem',
                           fontWeight: 600,
                           color: '#059669',
-                          marginBottom: '0.25rem',
-                          lineHeight: 1.3,
+                          marginBottom: '0.35rem',
+                          lineHeight: 1.45,
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                         }}
                         title={rec.subtitle}
                       >
@@ -210,14 +225,18 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
 
                     <p
                       style={{
-                        fontSize: '0.78rem',
+                        fontSize: '0.8rem',
                         color: '#6B7280',
                         margin: 0,
-                        lineHeight: 1.4,
+                        lineHeight: 1.5,
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
                         display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                        WebkitLineClamp: 3,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {rec.description}
@@ -225,33 +244,32 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                   </div>
                 </div>
 
-                {/* CTA button — flexShrink:0 on desktop, but wraps to its own full-width
-                    row when the container is too narrow (flexWrap:wrap above). */}
+                {/* CTA button */}
                 <a
                   href={rec.link || '#'}
                   target={rec.link && rec.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
                   aria-label={`Open ${rec.title}`}
+                  className="recommendation-cta-btn"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.35rem',
-                    /* On wide screens: compact pill. On narrow screens (when wrapped):
-                       stretch to full width so it's easy to tap. */
-                    flex: '0 0 auto',
+                    flexShrink: 0,
                     width: 'max-content',
                     maxWidth: '100%',
-                    padding: '0.45rem 0.9rem',
+                    padding: '0.5rem 1rem',
                     borderRadius: '9999px',
                     border: '1px solid #E5E7EB',
                     background: '#FFFFFF',
                     color: '#111827',
-                    fontSize: '0.78rem',
+                    fontSize: '0.8rem',
                     fontWeight: 600,
                     textDecoration: 'none',
                     whiteSpace: 'nowrap',
                     transition: 'all 150ms ease',
+                    boxSizing: 'border-box',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#0E4A32';
@@ -265,7 +283,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                   }}
                 >
                   <span>{rec.ctaText || t('recommendations.viewBtn')}</span>
-                  <ArrowUpRight size={13} />
+                  <ArrowUpRight size={14} />
                 </a>
               </div>
             );
