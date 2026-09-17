@@ -307,13 +307,13 @@ export default function Signup() {
               className="auth-input-control auth-select-control"
             >
               <option value={USER_ROLES.JOB_SEEKER}>
-                {t('auth.roleJobSeeker') || 'Job Seeker (Candidate / Trainee)'}
+                {t('auth.roleJobSeeker') || 'Job Seeker'}
               </option>
               <option value={USER_ROLES.INSTITUTION}>
-                {t('auth.roleInstitution') || 'Training Institution (ITI / Polytechnic / University)'}
+                {t('auth.roleInstitution') || 'Training Institution'}
               </option>
               <option value={USER_ROLES.INDUSTRY_PARTNER}>
-                Industry Partner (Company / Hiring Employer)
+                {t('auth.roleIndustryPartner') || 'Industry Partner (Company / Hiring Employer)'}
               </option>
             </select>
           </div>
