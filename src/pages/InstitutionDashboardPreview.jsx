@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import RoleSwitcher from '../components/RoleSwitcher';
+import ReportSkillModal from '../components/ReportSkillModal';
 import { INSTITUTION_CANDIDATES, INSTITUTION_SKILL_GAPS, INSTITUTION_TRENDS } from '../data/institutionDemoData';
 
 const panelStyle = {
@@ -83,27 +84,33 @@ export default function InstitutionDashboardPreview() {
   const [trend, setTrend] = useState('Rising');
   const [traineeEstimate, setTraineeEstimate] = useState('30');
   const [toastMessage, setToastMessage] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
 
-  const handleReportSkill = (e) => {
-    e.preventDefault();
-    if (!skillName.trim()) return;
+  const handleReportSkill = (newSkillOrEvent) => {
+    if (newSkillOrEvent && newSkillOrEvent.preventDefault) {
+      newSkillOrEvent.preventDefault();
+      if (!skillName.trim()) return;
 
-    const newSkill = {
-      id: Date.now(),
-      name: skillName.trim(),
-      trade,
-      trend,
-      trainees: parseInt(traineeEstimate, 10) || 20,
-    };
+      const newSkill = {
+        id: Date.now(),
+        name: skillName.trim(),
+        trade,
+        trend,
+        trainees: parseInt(traineeEstimate, 10) || 20,
+      };
 
-    setEmergingSkills([newSkill, ...emergingSkills]);
-    setSkillName('');
-    setToastMessage(`Emerging skill "${newSkill.name}" reported successfully! Thank you for contributing to SkillSync's curriculum insights.`);
+      setEmergingSkills([newSkill, ...emergingSkills]);
+      setSkillName('');
+      setToastMessage(`Emerging skill "${newSkill.name}" reported successfully! Thank you for contributing to SkillSync's curriculum insights.`);
+    } else if (newSkillOrEvent && newSkillOrEvent.name) {
+      setEmergingSkills([newSkillOrEvent, ...emergingSkills]);
+      setToastMessage(`Emerging skill "${newSkillOrEvent.name}" reported successfully! Thank you for contributing to SkillSync's curriculum insights.`);
+    }
 
     setTimeout(() => {
       setToastMessage('');
@@ -369,9 +376,9 @@ export default function InstitutionDashboardPreview() {
         >
           {/* Emerging Skills You're Training For Table */}
           <section style={panelStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   <Sparkles size={18} color="#047857" />
                   Emerging Skills You&apos;re Training For
                 </h2>
@@ -379,9 +386,36 @@ export default function InstitutionDashboardPreview() {
                   Forward-looking competencies your curriculum is actively developing.
                 </p>
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                {emergingSkills.length} Reported
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                  {emergingSkills.length} Reported
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsReportModalOpen(true)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: '#0E4A32',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(14, 74, 50, 0.25)',
+                    transition: 'background 150ms ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#093724')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#0E4A32')}
+                >
+                  <PlusCircle size={15} />
+                  <span>Report Emerging Skill</span>
+                </button>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -420,10 +454,29 @@ export default function InstitutionDashboardPreview() {
 
           {/* Report a New Emerging Skill Form */}
           <section style={panelStyle}>
-            <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <PlusCircle size={18} color="#0e4a32" />
-              Report a New Emerging Skill
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <PlusCircle size={18} color="#0e4a32" />
+                Report a New Emerging Skill
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsReportModalOpen(true)}
+                style={{
+                  padding: '0.25rem 0.55rem',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#0E4A32',
+                  background: '#ECFDF5',
+                  border: '1px solid #A7F3D0',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Open Modal
+              </button>
+            </div>
             <p style={{ margin: '0 0 1rem', color: '#64748b', fontSize: '0.82rem' }}>
               Log a high-growth skill your institute plans to teach or is piloting.
             </p>
@@ -822,6 +875,14 @@ export default function InstitutionDashboardPreview() {
             ))}
           </div>
         </section>
+
+        {/* Shared Report Emerging Skill Modal */}
+        <ReportSkillModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          role="institution"
+          onSubmit={handleReportSkill}
+        />
       </main>
     </div>
   );

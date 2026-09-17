@@ -552,8 +552,26 @@ select {
 }
 
 /* Responsive Institution & Employer Grid */
+.institution-emerging-grid,
+.industry-emerging-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 960px) {
+  .institution-emerging-grid,
+  .industry-emerging-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (max-width: 768px) {
-  .institution-split-grid {
+  .institution-split-grid,
+  .industry-split-grid {
     grid-template-columns: 1fr !important;
   }
 

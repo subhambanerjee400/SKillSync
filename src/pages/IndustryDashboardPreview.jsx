@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import RoleSwitcher from '../components/RoleSwitcher';
+import ReportSkillModal from '../components/ReportSkillModal';
 import { BULK_HIRING_INSIGHTS } from '../data/industryDemoData';
 
 const panelStyle = {
@@ -104,27 +105,33 @@ export default function IndustryDashboardPreview() {
   const [newTrend, setNewTrend] = useState('Rising');
   const [newOpenings, setNewOpenings] = useState('10');
   const [toastMessage, setToastMessage] = useState('');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
 
-  const handleReportDemand = (e) => {
-    e.preventDefault();
-    if (!newSkillName.trim()) return;
+  const handleReportDemand = (newSkillOrEvent) => {
+    if (newSkillOrEvent && newSkillOrEvent.preventDefault) {
+      newSkillOrEvent.preventDefault();
+      if (!newSkillName.trim()) return;
 
-    const reportedSkill = {
-      id: Date.now(),
-      name: newSkillName.trim(),
-      sector: newSector,
-      trend: newTrend,
-      openings: parseInt(newOpenings, 10) || 5,
-    };
+      const reportedSkill = {
+        id: Date.now(),
+        name: newSkillName.trim(),
+        sector: newSector,
+        trend: newTrend,
+        openings: parseInt(newOpenings, 10) || 5,
+      };
 
-    setHiringSkills([reportedSkill, ...hiringSkills]);
-    setNewSkillName('');
-    setToastMessage(`In-demand skill "${reportedSkill.name}" reported successfully! This will inform vocational training recommendations.`);
+      setHiringSkills([reportedSkill, ...hiringSkills]);
+      setNewSkillName('');
+      setToastMessage(`In-demand skill "${reportedSkill.name}" reported successfully! This will inform vocational training recommendations.`);
+    } else if (newSkillOrEvent && newSkillOrEvent.name) {
+      setHiringSkills([newSkillOrEvent, ...hiringSkills]);
+      setToastMessage(`In-demand skill "${newSkillOrEvent.name}" reported successfully! This will inform vocational training recommendations.`);
+    }
 
     setTimeout(() => {
       setToastMessage('');
@@ -389,12 +396,13 @@ export default function IndustryDashboardPreview() {
             gap: '1.25rem',
             marginBottom: '1.5rem',
           }}
+          className="industry-emerging-grid"
         >
           {/* Skills We're Currently Hiring For Table */}
           <section style={panelStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   <Sparkles size={18} color="#7E22CE" />
                   Skills We&apos;re Currently Hiring For
                 </h2>
@@ -402,9 +410,36 @@ export default function IndustryDashboardPreview() {
                   Demand signals submitted by your talent acquisition and engineering leads.
                 </p>
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
-                {hiringSkills.length} Skills Listed
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                  {hiringSkills.length} Skills Listed
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsReportModalOpen(true)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: '#7E22CE',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(126, 34, 206, 0.25)',
+                    transition: 'background 150ms ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#6B21A8')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#7E22CE')}
+                >
+                  <PlusCircle size={15} />
+                  <span>Report In-Demand Skill</span>
+                </button>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -443,10 +478,29 @@ export default function IndustryDashboardPreview() {
 
           {/* Report an Emerging Skill in Demand Form */}
           <section style={panelStyle}>
-            <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <PlusCircle size={18} color="#581C87" />
-              Report an Emerging Skill in Demand
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <PlusCircle size={18} color="#581C87" />
+                Report an Emerging Skill in Demand
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsReportModalOpen(true)}
+                style={{
+                  padding: '0.25rem 0.55rem',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#7E22CE',
+                  background: '#FAF5FF',
+                  border: '1px solid #E9D5FF',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Open Modal
+              </button>
+            </div>
             <p style={{ margin: '0 0 1rem', color: '#64748b', fontSize: '0.82rem' }}>
               Tell SkillSync what skills your enterprise struggles to find in regional applicants.
             </p>
@@ -878,6 +932,14 @@ export default function IndustryDashboardPreview() {
             ))}
           </div>
         </section>
+
+        {/* Shared Report Skill in Demand Modal */}
+        <ReportSkillModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          role="industry_partner"
+          onSubmit={handleReportDemand}
+        />
       </main>
     </div>
   );
