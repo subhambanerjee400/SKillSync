@@ -5,6 +5,7 @@
 export const CITIES = [
   // Exact cities from TRADE_INSTITUTES
   'Bengaluru',
+  'Bangalore',
   'Delhi',
   'Mumbai',
   'Hyderabad',

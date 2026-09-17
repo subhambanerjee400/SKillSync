@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
+import { getAvatarUrl } from '../data/avatars';
 import { useAuth } from '../hooks/useAuth';
 import { getUserProfile } from '../lib/profile';
 import { getUserSkillGapAnalysis, saveScoreIfChanged } from '../lib/scoring';
@@ -14,13 +17,15 @@ import ScoreSimulator from '../components/ScoreSimulator';
 import SkillRoadmap from '../components/SkillRoadmap';
 import RecommendationPanel from '../components/RecommendationPanel';
 import SkillDetailModal from '../components/SkillDetailModal';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { generateRoadmap } from '../lib/roadmap';
 import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu } from 'lucide-react';
 
 export default function Dashboard() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [profile, setProfile] = useState(null);
+  const { user, logout, profile: sharedProfile, userName, userAvatar, refreshProfile } = useAuth();
+  const [profile, setProfile] = useState(sharedProfile);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [analysis, setAnalysis] = useState(null);
@@ -28,6 +33,8 @@ export default function Dashboard() {
   const [recNotice, setRecNotice] = useState(null);
   const [activeSkillModal, setActiveSkillModal] = useState(null); // 'matched' | 'missing' | null
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const effectiveProfile = profile || sharedProfile;
 
   const roadmapSteps = useMemo(() => {
     if (!analysis) return [];
@@ -46,15 +53,16 @@ export default function Dashboard() {
     async function loadDashboardData() {
       setIsLoading(true);
       try {
-        const p = await getUserProfile(user.id);
+        const p = await refreshProfile(user.id);
         if (!isMounted) return;
 
-        if (!p) {
+        const activeProf = p || sharedProfile;
+        if (!activeProf) {
           navigate('/onboarding', { replace: true });
           return;
         }
 
-        setProfile(p);
+        setProfile(activeProf);
 
         // Fetch deterministic skill gap analysis
         const result = await getUserSkillGapAnalysis(user.id);
@@ -68,15 +76,15 @@ export default function Dashboard() {
         );
 
         // Generate tailored recommendations based on segment
-        if (p.segment === 'Trade') {
-          const tradeResult = generateTradeRecommendations(result.missingSkills, p);
+        if (activeProf.segment === 'Trade') {
+          const tradeResult = generateTradeRecommendations(result.missingSkills, activeProf);
           setRecommendations(tradeResult.recommendations || []);
           setRecNotice(tradeResult.notice || null);
         } else {
           const courseResult = generateCourseRecommendations(
             result.missingSkills,
             result.risingMissing,
-            p.role
+            activeProf.role
           );
           setRecommendations(courseResult || []);
           setRecNotice(null);
@@ -95,7 +103,7 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, [user, navigate]);
+  }, [user, navigate, refreshProfile, sharedProfile]);
 
   const handleLogout = async () => {
     try {
@@ -106,19 +114,7 @@ export default function Dashboard() {
     }
   };
 
-  const userName =
-    profile?.name ||
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.full_name ||
-    user?.name ||
-    (user?.email ? user.email.split('@')[0] : 'Member');
-
   const userEmail = user?.email || 'user@example.com';
-  const userAvatar =
-    user?.avatar_url ||
-    user?.avatar ||
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
 
   if (isLoading) {
     return (
@@ -150,10 +146,10 @@ export default function Dashboard() {
         </div>
         <div style={{ textAlign: 'center' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-            Analyzing Skill Readiness...
+            {t('dashboard.loadingTitle')}
           </h3>
           <p style={{ fontSize: '0.825rem', color: '#6B7280', margin: '4px 0 0 0' }}>
-            Auditing competency matrix and tailored learning pathways
+            {t('dashboard.loadingSubtitle')}
           </p>
         </div>
       </div>
@@ -163,29 +159,49 @@ export default function Dashboard() {
   // Live scoring data
   const liveScore = analysis?.score ?? 0;
   const liveLabel = profile?.role
-    ? `${profile.role} Readiness`
-    : 'Readiness Index';
+    ? `${profile.role} ${t('dashboard.readinessIndex')}`
+    : t('dashboard.readinessIndex');
 
   const filterQuery = searchQuery.trim().toLowerCase();
   const rawMatchedSkills = analysis?.matchedSkills || [];
   const rawMissingSkills = analysis?.missingSkills || [];
 
   const matchedSkills = filterQuery
-    ? rawMatchedSkills.filter((s) => s.toLowerCase().includes(filterQuery))
+    ? rawMatchedSkills.filter((s) => {
+        const canonical = s.toLowerCase();
+        const translated = getSkillLabel(s, i18n.language).toLowerCase();
+        return canonical.includes(filterQuery) || translated.includes(filterQuery);
+      })
     : rawMatchedSkills;
 
   const missingSkills = filterQuery
-    ? rawMissingSkills.filter((s) => s.toLowerCase().includes(filterQuery))
+    ? rawMissingSkills.filter((s) => {
+        const canonical = s.toLowerCase();
+        const translated = getSkillLabel(s, i18n.language).toLowerCase();
+        return canonical.includes(filterQuery) || translated.includes(filterQuery);
+      })
     : rawMissingSkills;
 
   const filteredRecommendations = filterQuery
-    ? recommendations.filter(
-      (r) =>
-        r.title?.toLowerCase().includes(filterQuery) ||
-        r.description?.toLowerCase().includes(filterQuery) ||
-        (r.skillsCovered && r.skillsCovered.some((s) => s.toLowerCase().includes(filterQuery))) ||
-        (r.skillsOffered && r.skillsOffered.some((s) => s.toLowerCase().includes(filterQuery)))
-    )
+    ? recommendations.filter((r) => {
+        const matchTitle = r.title?.toLowerCase().includes(filterQuery);
+        const matchDesc = r.description?.toLowerCase().includes(filterQuery);
+        const matchCovered =
+          r.skillsCovered &&
+          r.skillsCovered.some(
+            (s) =>
+              s.toLowerCase().includes(filterQuery) ||
+              getSkillLabel(s, i18n.language).toLowerCase().includes(filterQuery)
+          );
+        const matchOffered =
+          r.skillsOffered &&
+          r.skillsOffered.some(
+            (s) =>
+              s.toLowerCase().includes(filterQuery) ||
+              getSkillLabel(s, i18n.language).toLowerCase().includes(filterQuery)
+          );
+        return matchTitle || matchDesc || matchCovered || matchOffered;
+      })
     : recommendations;
 
   return (
@@ -202,7 +218,13 @@ export default function Dashboard() {
       }}
     >
       {/* 1. Left Sidebar (Desktop Static) */}
-      <Sidebar onLogout={handleLogout} />
+      <Sidebar
+        onLogout={handleLogout}
+        userAvatar={userAvatar}
+        onSelectItem={(item) => {
+          if (item === 'Profile') navigate('/edit-profile');
+        }}
+      />
 
       {/* 1b. Mobile Sidebar Drawer & Backdrop */}
       {isMobileSidebarOpen && (
@@ -216,6 +238,10 @@ export default function Dashboard() {
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
         onLogout={handleLogout}
+        userAvatar={userAvatar}
+        onSelectItem={(item) => {
+          if (item === 'Profile') navigate('/edit-profile');
+        }}
       />
 
       {/* 2. Main Content Canvas */}
@@ -245,7 +271,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
-              aria-label="Open navigation drawer"
+              aria-label={t('nav.toggleNavigation')}
               className="show-tablet-mobile"
               style={{
                 width: '40px',
@@ -287,8 +313,8 @@ export default function Dashboard() {
               />
               <input
                 type="text"
-                aria-label="Search skills, roles, or recommendations"
-                placeholder="Search skill or role..."
+                aria-label={t('dashboard.searchPlaceholder')}
+                placeholder={t('dashboard.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -334,8 +360,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Header Elements: Mail, Bell, Profile, Logout */}
+          {/* Right Header Elements: LanguageSwitcher, Mail, Bell, Profile, Logout */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+            {/* Language Switcher */}
+            <LanguageSwitcher variant="light" compact />
+
             {/* Mail Icon Button (hidden on narrow screens) */}
             <button
               type="button"
@@ -397,7 +426,22 @@ export default function Dashboard() {
             </button>
 
             {/* User Profile Pill */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', paddingLeft: '0.25rem' }}>
+            <div
+              onClick={() => navigate('/edit-profile')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                paddingLeft: '0.25rem',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                transition: 'background 150ms ease',
+              }}
+              title="View & Edit Profile"
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
               <img
                 src={userAvatar}
                 alt={userName}
@@ -424,7 +468,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              aria-label="Log out"
+              aria-label={t('nav.logout')}
               style={{
                 marginLeft: '0.5rem',
                 display: 'inline-flex',
@@ -452,7 +496,7 @@ export default function Dashboard() {
               }}
             >
               <LogOut size={15} />
-              <span className="hide-mobile">Logout</span>
+              <span className="hide-mobile">{t('nav.logout')}</span>
             </button>
           </div>
         </header>
@@ -475,10 +519,10 @@ export default function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#111827', margin: '0 0 0.25rem 0', letterSpacing: '-0.02em' }}>
-                Dashboard
+                {t('dashboard.title')}
               </h1>
               <p style={{ fontSize: '0.9rem', color: '#6B7280', margin: 0 }}>
-                Welcome back, {userName}! Plan, prioritize, and accomplish your skill alignment with ease.
+                {t('dashboard.welcome', { name: userName })}
               </p>
             </div>
 
@@ -506,7 +550,7 @@ export default function Dashboard() {
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#0E4A32')}
               >
                 <Plus size={16} />
-                <span>Update Target Role</span>
+                <span>{t('dashboard.updateTargetRole')}</span>
               </button>
 
               <button
@@ -530,7 +574,7 @@ export default function Dashboard() {
                 onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
               >
                 <Download size={15} />
-                <span>Export Report</span>
+                <span>{t('dashboard.exportReport')}</span>
               </button>
             </div>
           </div>
@@ -545,7 +589,7 @@ export default function Dashboard() {
 
           {/* Panel 2: SkillRoadmap (Step-by-step roadmap.sh inspired path) */}
           <SkillRoadmap
-            role={profile?.role || 'Target Role'}
+            role={effectiveProfile?.role || 'Target Role'}
             steps={roadmapSteps}
           />
 
@@ -573,9 +617,9 @@ export default function Dashboard() {
             type={activeSkillModal}
             onClose={() => setActiveSkillModal(null)}
             analysis={analysis}
-            role={profile?.role}
-            segment={profile?.segment}
-            userLocation={profile?.location}
+            role={effectiveProfile?.role}
+            segment={effectiveProfile?.segment}
+            userLocation={effectiveProfile?.location}
           />
         </main>
       </div>

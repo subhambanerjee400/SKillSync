@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MoreHorizontal } from 'lucide-react';
 
 export default function ScoreCard({ score = 84, label = 'Frontend Developer readiness' }) {
+  const { t } = useTranslation();
   const clampedScore = Math.max(0, Math.min(100, Math.round(score)));
 
   // Arc calculations for circular donut ring matching Donezo's "Project Progress"
@@ -31,10 +33,10 @@ export default function ScoreCard({ score = 84, label = 'Frontend Developer read
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <div>
           <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-            Readiness Score
+            {t('scoreCard.title')}
           </h3>
           <p style={{ fontSize: '0.75rem', color: '#6B7280', margin: '2px 0 0 0' }}>
-            Deterministic skill-demand index
+            {t('scoreCard.subtitle')}
           </p>
         </div>
         <button
@@ -140,7 +142,7 @@ export default function ScoreCard({ score = 84, label = 'Frontend Developer read
               {clampedScore}%
             </span>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', marginTop: '4px' }}>
-              Readiness
+              {t('scoreCard.centerLabel')}
             </span>
           </div>
         </div>
@@ -149,15 +151,15 @@ export default function ScoreCard({ score = 84, label = 'Frontend Developer read
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginTop: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#4B5563', fontWeight: 500 }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0E4A32' }} />
-            <span>Completed</span>
+            <span>{t('scoreCard.completed')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#4B5563', fontWeight: 500 }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#15803D' }} />
-            <span>In Progress</span>
+            <span>{t('scoreCard.inProgress')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#4B5563', fontWeight: 500 }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D1D5DB' }} />
-            <span>Pending</span>
+            <span>{t('scoreCard.pending')}</span>
           </div>
         </div>
       </div>

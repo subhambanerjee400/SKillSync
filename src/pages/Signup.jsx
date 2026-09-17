@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { getUserProfile } from '../lib/profile';
 import { getAccountHomePath, getAccountRole } from '../lib/accountRole';
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function Signup() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signup } = useAuth();
   const [fullName, setFullName] = useState('');
@@ -54,15 +56,15 @@ export default function Signup() {
     setSuccessMsg('');
 
     if (!fullName.trim()) {
-      setErrorMsg('Please enter your full name.');
+      setErrorMsg(t('auth.errFullName'));
       return;
     }
     if (!email || !email.includes('@')) {
-      setErrorMsg('Please enter a valid email address.');
+      setErrorMsg(t('auth.errValidEmail'));
       return;
     }
     if (!password || password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters.');
+      setErrorMsg(t('auth.errPasswordLength'));
       return;
     }
 
@@ -74,26 +76,26 @@ export default function Signup() {
         account_role: accountRole,
       });
 
-      setSuccessMsg('Account created successfully! Redirecting to login...');
+      setSuccessMsg(t('auth.accountCreatedSuccess'));
       setTimeout(() => {
         navigate('/login?registered=true', { replace: true });
       }, 1000);
     } catch (err) {
       console.error('[Signup] Error:', err);
-      setErrorMsg(err.message || 'Registration failed. Please try again.');
+      setErrorMsg(err.message || t('auth.errSignupFailed'));
       setIsSubmitting(false);
     }
   };
 
   return (
     <AuthLayout
-      badgeText="Account Registration"
+      badgeText={t('auth.registrationBadge')}
       badgeIcon={UserPlus}
-      kicker="Skill Alignment Platform"
-      title="Create Your Account"
-      subtitle="Bridge the curriculum gap with predictive skill intelligence. Join SkillSync today."
-      footerPrompt="Already have an account?"
-      footerLinkText="Sign In"
+      kicker={t('common.tagline')}
+      title={t('auth.createAccount')}
+      subtitle={t('auth.signupSubtitle')}
+      footerPrompt={t('auth.haveAccountPrompt')}
+      footerLinkText={t('auth.signInLink')}
       footerLinkTo="/login"
     >
       {/* Feedback Alerts */}
@@ -128,7 +130,7 @@ export default function Signup() {
         {/* Full Name Field */}
         <div className="auth-field-group">
           <label htmlFor="signup-name" className="auth-field-label">
-            Full Name
+            {t('auth.fullNameLabel')}
           </label>
           <div className="auth-input-box">
             <div className="auth-input-icon">
@@ -144,7 +146,7 @@ export default function Signup() {
                 setFullName(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              placeholder="e.g. Alex Morgan"
+              placeholder={t('auth.fullNamePlaceholder')}
               className="auth-input-control"
             />
           </div>
@@ -153,7 +155,7 @@ export default function Signup() {
         {/* Account Role Dropdown */}
         <div className="auth-field-group">
           <label htmlFor="signup-account-role" className="auth-field-label">
-            I am a...
+            {t('auth.iamLabel')}
           </label>
           <div className="auth-input-box">
             <div className="auth-input-icon">
@@ -165,9 +167,9 @@ export default function Signup() {
               onChange={(e) => setAccountRole(e.target.value)}
               className="auth-input-control auth-select-control"
             >
-              <option value="user">Job Seeker</option>
-              <option value="institution">Training Institution</option>
-              <option value="industry">Employer</option>
+              <option value="user">{t('auth.roleJobSeeker')}</option>
+              <option value="institution">{t('auth.roleInstitution')}</option>
+              <option value="industry">{t('auth.roleEmployer')}</option>
             </select>
           </div>
         </div>
@@ -175,7 +177,7 @@ export default function Signup() {
         {/* Email Field */}
         <div className="auth-field-group">
           <label htmlFor="signup-email" className="auth-field-label">
-            Email Address
+            {t('auth.emailLabel')}
           </label>
           <div className="auth-input-box">
             <div className="auth-input-icon">
@@ -191,7 +193,7 @@ export default function Signup() {
                 setEmail(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              placeholder="name@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               className="auth-input-control"
             />
           </div>
@@ -200,7 +202,7 @@ export default function Signup() {
         {/* Password Field */}
         <div className="auth-field-group">
           <label htmlFor="signup-password" className="auth-field-label">
-            Password (min. 6 characters)
+            {t('auth.passwordMinLabel')}
           </label>
           <div className="auth-input-box">
             <div className="auth-input-icon">
@@ -217,14 +219,14 @@ export default function Signup() {
                 setPassword(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              placeholder="••••••••••••"
+              placeholder={t('auth.passwordPlaceholder')}
               className="auth-input-control"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="auth-pwd-toggle"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -240,11 +242,11 @@ export default function Signup() {
           {isSubmitting ? (
             <>
               <Loader2 size={18} className="animate-spin" />
-              <span>Creating Account...</span>
+              <span>{t('auth.creatingAccount')}</span>
             </>
           ) : (
             <>
-              <span>Create Account</span>
+              <span>{t('auth.createAccountBtn')}</span>
               <ArrowRight size={17} />
             </>
           )}

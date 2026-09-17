@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import {
   X,
   ExternalLink,
@@ -23,6 +25,8 @@ export default function SkillDetailModal({
   segment = 'Software',
   userLocation = '',
 }) {
+  const { t, i18n } = useTranslation();
+
   // Close on Escape key press
   useEffect(() => {
     if (!isOpen) return;
@@ -141,7 +145,7 @@ export default function SkillDetailModal({
             }}
           >
             <TrendingUp size={11} />
-            <span>Rising Demand</span>
+            <span>{t('modal.statusRising')}</span>
           </span>
         );
       case 'stable':
@@ -160,7 +164,7 @@ export default function SkillDetailModal({
               border: '1px solid #BFDBFE',
             }}
           >
-            <span>Stable Baseline</span>
+            <span>{t('modal.statusStable')}</span>
           </span>
         );
       case 'declining':
@@ -179,7 +183,7 @@ export default function SkillDetailModal({
               border: '1px solid #FDE68A',
             }}
           >
-            <span>Declining</span>
+            <span>{t('modal.statusDeclining')}</span>
           </span>
         );
       case 'legacy':
@@ -198,7 +202,7 @@ export default function SkillDetailModal({
               border: '1px solid #E9D5FF',
             }}
           >
-            <span>Legacy</span>
+            <span>{t('modal.statusLegacy')}</span>
           </span>
         );
       default:
@@ -215,7 +219,7 @@ export default function SkillDetailModal({
               color: '#475569',
             }}
           >
-            {status || 'Standard'}
+            {status || t('modal.statusStandard')}
           </span>
         );
     }
@@ -295,12 +299,12 @@ export default function SkillDetailModal({
                   letterSpacing: '-0.02em',
                 }}
               >
-                {isMatchedView ? 'Matched Competencies' : 'Skill Gap & Recommendations'}
+                {isMatchedView ? t('modal.matchedTitle') : t('modal.missingTitle')}
               </h2>
               <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '2px 0 0 0' }}>
                 {isMatchedView
-                  ? `${matchedDetails.length} skills verified for ${role}`
-                  : `Targeted learning pathways for missing skills in ${role}`}
+                  ? t('modal.matchedSubtitle', { count: matchedDetails.length, role })
+                  : t('modal.missingSubtitle', { role })}
               </p>
             </div>
           </div>
@@ -308,7 +312,7 @@ export default function SkillDetailModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
+            aria-label={t('common.close')}
             style={{
               width: '44px',
               height: '44px',
@@ -359,7 +363,7 @@ export default function SkillDetailModal({
                   fontSize: '0.9rem',
                 }}
               >
-                No verified skills matched for this target role yet.
+                {t('modal.noMatchedFound')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -393,7 +397,7 @@ export default function SkillDetailModal({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <CheckCircle2 size={16} color="#10B981" />
                           <span style={{ fontSize: '0.925rem', fontWeight: 700, color: '#1E293B' }}>
-                            {item.name}
+                            {getSkillLabel(item.name, i18n.language)}
                           </span>
                         </div>
                         {renderDemandBadge(item.demandStatus)}
@@ -417,8 +421,7 @@ export default function SkillDetailModal({
                         >
                           <ShieldAlert size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
                           <span>
-                            This skill is valuable, but industry demand is shifting. Consider pairing it with{' '}
-                            <strong>{nearestRising}</strong> for highest modern relevance.
+                            {t('modal.advisoryDesc', { rising: getSkillLabel(nearestRising, i18n.language) })}
                           </span>
                         </div>
                       )}
@@ -443,7 +446,7 @@ export default function SkillDetailModal({
                 >
                   <TrendingUp size={16} color="#059669" />
                   <h3 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#065F46', margin: 0 }}>
-                    HIGH PRIORITY • RISING MARKET DEMAND
+                    {t('modal.risingGapsHeader')}
                   </h3>
                   <span
                     style={{
@@ -456,13 +459,13 @@ export default function SkillDetailModal({
                       borderRadius: '9999px',
                     }}
                   >
-                    {risingMissing.length} skills
+                    {t('modal.skillsCount', { count: risingMissing.length })}
                   </span>
                 </div>
 
                 {risingMissing.length === 0 ? (
                   <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: '0.25rem 0', fontStyle: 'italic' }}>
-                    Great job! You have covered all high-growth rising skills for this role.
+                    {t('modal.risingCovered')}
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -486,7 +489,7 @@ export default function SkillDetailModal({
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#065F46' }}>
-                                {skillName}
+                                {getSkillLabel(skillName, i18n.language)}
                               </span>
                               {renderDemandBadge('rising')}
                             </div>
@@ -519,7 +522,7 @@ export default function SkillDetailModal({
                               onMouseEnter={(e) => (e.currentTarget.style.background = '#15803D')}
                               onMouseLeave={(e) => (e.currentTarget.style.background = '#0E4A32')}
                             >
-                              <span>View Resource</span>
+                              <span>{t('modal.viewResource')}</span>
                               <ExternalLink size={12} />
                             </a>
                           )}
@@ -542,7 +545,7 @@ export default function SkillDetailModal({
                 >
                   <BookOpen size={16} color="#2563EB" />
                   <h3 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#1E40AF', margin: 0 }}>
-                    CORE FOUNDATION • STABLE DEMAND
+                    {t('modal.stableGapsHeader')}
                   </h3>
                   <span
                     style={{
@@ -555,13 +558,13 @@ export default function SkillDetailModal({
                       borderRadius: '9999px',
                     }}
                   >
-                    {stableMissing.length} skills
+                    {t('modal.skillsCount', { count: stableMissing.length })}
                   </span>
                 </div>
 
                 {stableMissing.length === 0 ? (
                   <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: '0.25rem 0', fontStyle: 'italic' }}>
-                    All core foundational skills are acquired.
+                    {t('modal.stableCovered')}
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -585,7 +588,7 @@ export default function SkillDetailModal({
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B' }}>
-                                {skillName}
+                                {getSkillLabel(skillName, i18n.language)}
                               </span>
                               {renderDemandBadge('stable')}
                             </div>
@@ -623,7 +626,7 @@ export default function SkillDetailModal({
                                 e.currentTarget.style.background = '#F1F5F9';
                               }}
                             >
-                              <span>View Resource</span>
+                              <span>{t('modal.viewResource')}</span>
                               <ExternalLink size={12} />
                             </a>
                           )}
@@ -648,7 +651,7 @@ export default function SkillDetailModal({
                   >
                     <Building2 size={16} color="#64748B" />
                     <h3 style={{ fontSize: '0.875rem', fontWeight: 800, color: '#475569', margin: 0 }}>
-                      SECONDARY / LEGACY PREREQUISITES
+                      {t('modal.legacyGapsHeader')}
                     </h3>
                     <span
                       style={{
@@ -661,7 +664,7 @@ export default function SkillDetailModal({
                         borderRadius: '9999px',
                       }}
                     >
-                      {decliningOrLegacyMissing.length} skills
+                      {t('modal.skillsCount', { count: decliningOrLegacyMissing.length })}
                     </span>
                   </div>
 
@@ -686,7 +689,7 @@ export default function SkillDetailModal({
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
-                                {skillName}
+                                {getSkillLabel(skillName, i18n.language)}
                               </span>
                               {renderDemandBadge('legacy')}
                             </div>
@@ -717,7 +720,7 @@ export default function SkillDetailModal({
                                 textDecoration: 'none',
                               }}
                             >
-                              <span>View Resource</span>
+                              <span>{t('modal.viewResource')}</span>
                               <ExternalLink size={12} />
                             </a>
                           )}
@@ -743,7 +746,7 @@ export default function SkillDetailModal({
           }}
         >
           <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-            Deterministic alignment matrix • SkillSync
+            {t('modal.alignmentMatrix')}
           </span>
           <button
             type="button"
@@ -763,7 +766,7 @@ export default function SkillDetailModal({
               justifyContent: 'center',
             }}
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

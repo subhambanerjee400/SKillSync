@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { MapPin, DollarSign, CheckCircle, AlertCircle, Send, Briefcase } from 'lucide-react';
 
 export default function JobCard({
   job,
   onApply,
 }) {
+  const { i18n } = useTranslation();
   const [applied, setApplied] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -121,7 +124,7 @@ export default function JobCard({
                     fontWeight: 500,
                   }}
                 >
-                  {skill}
+                  {getSkillLabel(skill, i18n.language)}
                 </span>
               ))}
             </div>
@@ -148,7 +151,7 @@ export default function JobCard({
                       fontWeight: 500,
                     }}
                   >
-                    {skill}
+                    {getSkillLabel(skill, i18n.language)}
                   </span>
                 ))}
               </div>

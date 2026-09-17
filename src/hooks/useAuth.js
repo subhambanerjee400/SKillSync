@@ -1,6 +1,8 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { saveAccountRoleLocally } from '../lib/accountRole';
+import { getUserProfile, saveProfileLocally } from '../lib/profile';
+import { getAvatarUrl } from '../data/avatars';
 
 const AuthContext = createContext(null);
 
@@ -49,6 +51,20 @@ function getOrCreateFallbackUserId(email) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(() => {
+    try {
+      const savedUserStr = localStorage.getItem('skillsync_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u?.id) {
+          const cached = localStorage.getItem(`skillsync_profile_${u.id}`);
+          if (cached) return JSON.parse(cached);
+        }
+      }
+    } catch (e) {}
+    return null;
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
   const [role, setRole] = useState('student');
   const [loading, setLoading] = useState(true); // Only true during initial session check
   const [error, setError] = useState(null);
@@ -125,6 +141,124 @@ export function AuthProvider({ children }) {
       subscription?.unsubscribe();
     };
   }, []);
+
+  // Fetch and refresh active profile from Supabase profiles table
+  const refreshProfile = useCallback(async (targetUserId) => {
+    const uid = targetUserId || user?.id;
+    if (!uid) {
+      setProfile(null);
+      return null;
+    }
+    setProfileLoading(true);
+    try {
+      const p = await getUserProfile(uid);
+      if (p) {
+        setProfile(p);
+      }
+      return p;
+    } catch (err) {
+      console.warn('refreshProfile error:', err);
+      return null;
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [user?.id]);
+
+  // Keep profile in sync whenever user id changes
+  useEffect(() => {
+    if (user?.id) {
+      // 1. Immediately hydrate from local storage cache if available
+      try {
+        const cached = localStorage.getItem(`skillsync_profile_${user.id}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && (parsed.id === user.id || parsed.name)) {
+            setProfile((curr) => curr || parsed);
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fetch fresh copy from Supabase profiles table
+      refreshProfile(user.id);
+    } else {
+      setProfile(null);
+    }
+  }, [user?.id, refreshProfile]);
+
+  // Update profile across shared context, Supabase, and localStorage
+  const updateProfile = useCallback(async (updates) => {
+    if (!user?.id) return { error: new Error('No authenticated user') };
+
+    // 1. Optimistically merge and update state + local cache so all components re-render immediately
+    let mergedProfile = null;
+    setProfile((prev) => {
+      mergedProfile = { ...(prev || {}), id: user.id, ...updates };
+      saveProfileLocally(user.id, mergedProfile);
+      return mergedProfile;
+    });
+
+    // 2. Keep skillsync_user in sync if name or avatar was updated
+    if (updates.name || updates.avatar_url) {
+      try {
+        const savedUserStr = localStorage.getItem('skillsync_user');
+        if (savedUserStr) {
+          const u = JSON.parse(savedUserStr);
+          if (updates.name) {
+            u.name = updates.name;
+            u.full_name = updates.name;
+          }
+          if (updates.avatar_url) {
+            u.avatar_url = updates.avatar_url;
+            u.avatar = updates.avatar_url;
+          }
+          localStorage.setItem('skillsync_user', JSON.stringify(u));
+        }
+      } catch (e) {}
+    }
+
+    // 3. Write updates directly to Supabase profiles table
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Supabase updateProfile warning:', error.message);
+      } else if (data) {
+        setProfile(data);
+        saveProfileLocally(user.id, data);
+      }
+      return { data: data || mergedProfile, error };
+    } catch (err) {
+      console.warn('updateProfile network error:', err);
+      return { data: mergedProfile, error: err };
+    }
+  }, [user?.id]);
+
+  // Canonical single source of truth for user's display name
+  const userName = useMemo(() => {
+    return (
+      profile?.name ||
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.full_name ||
+      user?.name ||
+      (user?.email ? user.email.split('@')[0] : 'Member')
+    );
+  }, [profile?.name, user]);
+
+  // Canonical single source of truth for user's avatar URL
+  const userAvatar = useMemo(() => {
+    const rawAvatar =
+      profile?.avatar_url ||
+      user?.user_metadata?.avatar_url ||
+      user?.avatar_url ||
+      user?.avatar;
+    return getAvatarUrl(rawAvatar, userName);
+  }, [profile?.avatar_url, user, userName]);
 
   const login = async (email, password) => {
     setError(null);
@@ -280,6 +414,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setSession(null);
+      setProfile(null);
       setRole('student');
       localStorage.removeItem('skillsync_user');
     }
@@ -293,12 +428,19 @@ export function AuthProvider({ children }) {
     user,
     session,
     role,
+    profile,
+    profileLoading,
+    userName,
+    userAvatar,
     loading,
     error,
     login,
     signup,
     logout,
     switchRole,
+    refreshProfile,
+    updateProfile,
+    setProfile,
   };
 
   return React.createElement(

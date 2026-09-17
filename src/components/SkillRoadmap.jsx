@@ -1,7 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { Check, Compass, Zap, ArrowRight, TrendingUp, Circle } from 'lucide-react';
 
 export default function SkillRoadmap({ role = 'Role', steps = [] }) {
+  const { t, i18n } = useTranslation();
+
   if (!Array.isArray(steps) || steps.length === 0) {
     return null;
   }
@@ -52,7 +56,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#111827', margin: 0 }}>
-                Skill Roadmap
+                {t('roadmap.title')}
               </h3>
               <span
                 style={{
@@ -65,11 +69,11 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                   border: '1px solid #DCFCE7',
                 }}
               >
-                {role} Path
+                {role} {t('roadmap.pathBadge')}
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '2px 0 0 0' }}>
-              Step-by-step progression to full role readiness (ordered by impact & market demand)
+              {t('roadmap.subtitle')}
             </p>
           </div>
         </div>
@@ -81,7 +85,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
               {doneCount}/{totalCount}
             </span>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280' }}>
-              Steps Mastered ({progressPct}%)
+              {t('roadmap.masteredSteps', { pct: progressPct })}
             </span>
           </div>
           {/* Progress Bar Track */}
@@ -138,7 +142,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
           >
             <Check size={11} strokeWidth={3} />
           </span>
-          <span>Mastered</span>
+          <span>{t('roadmap.legendMastered')}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
@@ -156,7 +160,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
           >
             <Zap size={11} />
           </span>
-          <span style={{ color: '#065F46' }}>Next Target (Highest Impact)</span>
+          <span style={{ color: '#065F46' }}>{t('roadmap.legendNext')}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
@@ -175,7 +179,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
           >
             #
           </span>
-          <span style={{ color: '#6B7280' }}>Upcoming Milestone</span>
+          <span style={{ color: '#6B7280' }}>{t('roadmap.legendUpcoming')}</span>
         </div>
       </div>
 
@@ -261,7 +265,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                       color: isDone ? '#0E4A32' : isNext ? '#065F46' : '#9CA3AF',
                     }}
                   >
-                    {isDone ? 'Completed' : isNext ? 'Focus Next' : `Step ${idx + 1}`}
+                    {isDone ? t('roadmap.completed') : isNext ? t('roadmap.focusNext') : t('roadmap.stepNum', { num: idx + 1 })}
                   </span>
                 </div>
 
@@ -278,7 +282,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                   }}
                   title={`Critical demand weight: ${step.weight}/10`}
                 >
-                  wt: {step.weight}
+                  {t('roadmap.weight')}: {step.weight}
                 </span>
               </div>
 
@@ -295,7 +299,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                     overflowWrap: 'break-word',
                   }}
                 >
-                  {step.skill}
+                  {getSkillLabel(step.skill, i18n.language)}
                 </h4>
               </div>
 
@@ -316,7 +320,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                     }}
                   >
                     <TrendingUp size={11} />
-                    <span>Rising Demand</span>
+                    <span>{t('roadmap.risingDemand')}</span>
                   </span>
                 ) : (
                   <span style={{ fontSize: '0.7rem', color: '#9CA3AF', fontStyle: 'italic' }}>

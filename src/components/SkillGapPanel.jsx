@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { ArrowUpRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function SkillGapPanel({
@@ -7,6 +9,8 @@ export default function SkillGapPanel({
   onOpenMatched,
   onOpenMissing,
 }) {
+  const { t, i18n } = useTranslation();
+
   return (
     <div
       className="skill-gap-grid"
@@ -28,7 +32,7 @@ export default function SkillGapPanel({
           {/* Header Row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#E2E8F0' }}>
-              Matched Skills
+              {t('skillGap.matchedTitle')}
             </span>
             <button
               type="button"
@@ -84,7 +88,7 @@ export default function SkillGapPanel({
               }}
             >
               <CheckCircle2 size={12} />
-              <span>Verified alignment</span>
+              <span>{t('skillGap.verifiedAlignment')}</span>
             </span>
           </div>
         </div>
@@ -93,7 +97,7 @@ export default function SkillGapPanel({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)', minWidth: 0, maxWidth: '100%' }}>
           {matchedSkills.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)', margin: 0, fontStyle: 'italic' }}>
-              No matched skills recorded yet. Complete your onboarding skills checklist.
+              {t('skillGap.noMatched')}
             </p>
           ) : (
             matchedSkills.map((skill, i) => (
@@ -116,7 +120,7 @@ export default function SkillGapPanel({
                 }}
               >
                 <span style={{ width: '5px', height: '5px', minWidth: '5px', borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />
-                <span style={{ wordBreak: 'break-word' }}>{skill}</span>
+                <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(skill, i18n.language)}</span>
               </span>
             ))
           )}
@@ -140,7 +144,7 @@ export default function SkillGapPanel({
           {/* Header Row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6B7280' }}>
-              Missing Skills
+              {t('skillGap.missingTitle')}
             </span>
             <button
               type="button"
@@ -196,7 +200,7 @@ export default function SkillGapPanel({
               }}
             >
               {missingSkills.length === 0 ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-              <span>{missingSkills.length === 0 ? 'Fully aligned' : 'Target gaps to bridge'}</span>
+              <span>{missingSkills.length === 0 ? t('skillGap.fullyAligned') : t('skillGap.targetGaps')}</span>
             </span>
           </div>
         </div>
@@ -205,7 +209,7 @@ export default function SkillGapPanel({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid #F3F4F6', minWidth: 0, maxWidth: '100%' }}>
           {missingSkills.length === 0 ? (
             <p style={{ fontSize: '0.8rem', color: '#059669', margin: 0, fontWeight: 600 }}>
-              🎉 Zero skill gaps! You meet 100% of the core competencies for this role.
+              {t('skillGap.zeroGaps')}
             </p>
           ) : (
             missingSkills.map((skill, i) => (
@@ -228,7 +232,7 @@ export default function SkillGapPanel({
                 }}
               >
                 <span style={{ width: '5px', height: '5px', minWidth: '5px', borderRadius: '50%', background: '#FB7185', flexShrink: 0 }} />
-                <span style={{ wordBreak: 'break-word' }}>{skill}</span>
+                <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(skill, i18n.language)}</span>
               </span>
             ))
           )}

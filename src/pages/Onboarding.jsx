@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import LocationAutocomplete from '../components/LocationAutocomplete';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
   Code,
   Wrench,
@@ -104,8 +107,9 @@ const EXPERIENCE_OPTIONS = [
 ];
 
 export default function Onboarding() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setProfile } = useAuth();
 
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -233,17 +237,17 @@ export default function Onboarding() {
     });
 
     if (!name.trim()) {
-      setErrorMsg('Please enter your full name.');
+      setErrorMsg(t('onboarding.errName'));
       console.warn('[Onboarding] Validation failed: Missing name.');
       return;
     }
     if (!location.trim()) {
-      setErrorMsg('Please enter your location.');
+      setErrorMsg(t('onboarding.errLocation'));
       console.warn('[Onboarding] Validation failed: Missing location.');
       return;
     }
     if (skills.length === 0) {
-      setErrorMsg('Please select or add at least one current skill.');
+      setErrorMsg(t('onboarding.errSkills'));
       console.warn('[Onboarding] Validation failed: No skills selected.');
       return;
     }
@@ -294,6 +298,7 @@ export default function Onboarding() {
       // Save to localStorage for instant local reliability
       localStorage.setItem(`skillsync_profile_${user.id}`, JSON.stringify(profileData));
       localStorage.setItem(`skillsync_skills_${user.id}`, JSON.stringify(skills));
+      if (setProfile) setProfile(profileData);
       console.log('[Onboarding] Saved to localStorage. Navigating to /dashboard...');
 
       // Navigate to /dashboard
@@ -301,18 +306,20 @@ export default function Onboarding() {
     } catch (err) {
       console.error('[Onboarding] ❌ Unexpected error in handleSubmit:', err);
       // Fallback: save locally and navigate
+      const fallbackProfile = {
+        id: user.id,
+        name: name.trim(),
+        segment,
+        role,
+        experience,
+        location: location.trim(),
+      };
       localStorage.setItem(
         `skillsync_profile_${user.id}`,
-        JSON.stringify({
-          id: user.id,
-          name: name.trim(),
-          segment,
-          role,
-          experience,
-          location: location.trim(),
-        })
+        JSON.stringify(fallbackProfile)
       );
       localStorage.setItem(`skillsync_skills_${user.id}`, JSON.stringify(skills));
+      if (setProfile) setProfile(fallbackProfile);
       console.log('[Onboarding] Fallback saved to localStorage. Navigating to /dashboard...');
       navigate('/dashboard', { replace: true });
     } finally {
@@ -336,13 +343,21 @@ export default function Onboarding() {
       >
         <Loader2 size={28} className="animate-spin" color="#10b981" />
         <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-          Checking your profile...
+          {t('onboarding.checkingProfile')}
         </span>
       </div>
     );
   }
 
   const roleSuggestions = SUGGESTED_SKILLS[role] || [];
+
+  const getExperienceLabel = (opt) => {
+    if (opt.startsWith('Beginner')) return t('onboarding.expBeginner');
+    if (opt.startsWith('Junior')) return t('onboarding.expJunior');
+    if (opt.startsWith('Mid-Level')) return t('onboarding.expMid');
+    if (opt.startsWith('Senior')) return t('onboarding.expSenior');
+    return opt;
+  };
 
   return (
     <div
@@ -367,6 +382,11 @@ export default function Onboarding() {
           padding: 'clamp(1.25rem, 4vw, 2.5rem)',
         }}
       >
+        {/* Top bar with LanguageSwitcher */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+          <LanguageSwitcher variant="light" compact />
+        </div>
+
         {/* Header */}
         <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <div
@@ -393,10 +413,10 @@ export default function Onboarding() {
               letterSpacing: '-0.02em',
             }}
           >
-            Welcome to SkillSync
+            {t('onboarding.welcomeTitle')}
           </h1>
           <p style={{ fontSize: '0.925rem', color: '#64748b', margin: 0 }}>
-            Let's set up your profile to tailor your skill readiness pathway.
+            {t('onboarding.welcomeSubtitle')}
           </p>
         </div>
 
@@ -432,7 +452,7 @@ export default function Onboarding() {
                 marginBottom: '0.4rem',
               }}
             >
-              Full Name <span style={{ color: '#ef4444' }}>*</span>
+              {t('onboarding.fullName')} <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <div style={{ position: 'relative' }}>
               <User
@@ -450,7 +470,7 @@ export default function Onboarding() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Alex Morgan"
+                placeholder={t('auth.fullNamePlaceholder')}
                 style={{
                   width: '100%',
                   padding: '0.65rem 0.85rem 0.65rem 2.4rem',
@@ -476,7 +496,7 @@ export default function Onboarding() {
                 marginBottom: '0.4rem',
               }}
             >
-              Industry Segment <span style={{ color: '#ef4444' }}>*</span>
+              {t('onboarding.industrySegment')} <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <div
               style={{
@@ -506,7 +526,7 @@ export default function Onboarding() {
                 }}
               >
                 <Code size={18} color={segment === 'Software' ? '#10b981' : 'currentColor'} />
-                <span>Software</span>
+                <span>{t('onboarding.software')}</span>
               </button>
 
               <button
@@ -530,7 +550,7 @@ export default function Onboarding() {
                 }}
               >
                 <Wrench size={18} color={segment === 'Trade' ? '#10b981' : 'currentColor'} />
-                <span>Trade</span>
+                <span>{t('onboarding.trade')}</span>
               </button>
             </div>
           </div>
@@ -546,7 +566,7 @@ export default function Onboarding() {
                 marginBottom: '0.4rem',
               }}
             >
-              Target Role / Trade <span style={{ color: '#ef4444' }}>*</span>
+              {t('onboarding.targetRole')} <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <div style={{ position: 'relative', marginBottom: '0.65rem' }}>
               <Briefcase
@@ -651,7 +671,7 @@ export default function Onboarding() {
                 marginBottom: '0.4rem',
               }}
             >
-              Experience Level <span style={{ color: '#ef4444' }}>*</span>
+              {t('onboarding.experienceLevel')} <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <div style={{ position: 'relative' }}>
               <Clock
@@ -682,7 +702,7 @@ export default function Onboarding() {
               >
                 {EXPERIENCE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>
-                    {opt}
+                    {getExperienceLabel(opt)}
                   </option>
                 ))}
               </select>
@@ -700,12 +720,12 @@ export default function Onboarding() {
                 marginBottom: '0.4rem',
               }}
             >
-              Location <span style={{ color: '#ef4444' }}>*</span>
+              {t('onboarding.location')} <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <LocationAutocomplete
               value={location}
               onChange={setLocation}
-              placeholder="Search or enter city (e.g. Bengaluru, Delhi)..."
+              placeholder={t('onboarding.locationPlaceholder')}
               required
             />
           </div>
@@ -727,10 +747,10 @@ export default function Onboarding() {
                   color: '#334155',
                 }}
               >
-                Current Skills <span style={{ color: '#ef4444' }}>*</span>
+                {t('onboarding.currentSkills')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <span style={{ fontSize: '0.775rem', color: '#64748b' }}>
-                {skills.length} selected
+                {t('onboarding.skillsSelected', { count: skills.length })}
               </span>
             </div>
 
@@ -767,7 +787,7 @@ export default function Onboarding() {
                       boxSizing: 'border-box',
                     }}
                   >
-                    <span style={{ wordBreak: 'break-word' }}>{skill}</span>
+                    <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(skill, i18n.language)}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
@@ -800,7 +820,7 @@ export default function Onboarding() {
                   textAlign: 'center',
                 }}
               >
-                Select from suggested skills below or type your own skills.
+                {t('onboarding.emptySkillsPrompt')}
               </div>
             )}
 
@@ -816,7 +836,7 @@ export default function Onboarding() {
                     handleAddCustomSkill();
                   }
                 }}
-                placeholder="Add custom skill (press Enter)..."
+                placeholder={t('onboarding.addCustomSkillPlaceholder')}
                 style={{
                   flex: 1,
                   minWidth: 0,
@@ -850,7 +870,7 @@ export default function Onboarding() {
                 }}
               >
                 <Plus size={15} />
-                <span>Add</span>
+                <span>{t('onboarding.addBtn')}</span>
               </button>
             </div>
 
@@ -865,7 +885,7 @@ export default function Onboarding() {
                   marginBottom: '0.4rem',
                 }}
               >
-                Suggested for {role}:
+                {t('onboarding.suggestedForRole', { role })}
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', minWidth: 0, maxWidth: '100%' }}>
                 {roleSuggestions.map((suggestion) => {
@@ -895,7 +915,7 @@ export default function Onboarding() {
                       }}
                     >
                       {isSelected && <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />}
-                      <span style={{ wordBreak: 'break-word' }}>{suggestion}</span>
+                      <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(suggestion, i18n.language)}</span>
                     </button>
                   );
                 })}
@@ -931,11 +951,11 @@ export default function Onboarding() {
             {isSubmitting ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>Saving Profile...</span>
+                <span>{t('onboarding.savingProfile')}</span>
               </>
             ) : (
               <>
-                <span>Continue to Dashboard</span>
+                <span>{t('onboarding.continueBtn')}</span>
                 <ArrowRight size={18} />
               </>
             )}

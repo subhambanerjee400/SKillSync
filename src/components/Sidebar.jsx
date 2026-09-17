@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuth';
 import { LayoutDashboard, User, LogOut, Sparkles, ArrowRight, ShieldCheck, X } from 'lucide-react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Sidebar({
   onLogout,
@@ -8,7 +11,11 @@ export default function Sidebar({
   isMobile = false,
   isOpen = false,
   onClose,
+  userAvatar: propAvatar = null,
 }) {
+  const { t } = useTranslation();
+  const { userAvatar: authAvatar } = useAuth();
+  const userAvatar = propAvatar || authAvatar;
   const [current, setCurrent] = useState(activeItem);
 
   const handleSelect = (item) => {
@@ -75,7 +82,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close navigation drawer"
+              aria-label={t('nav.closeDrawer')}
               style={{
                 width: '36px',
                 height: '36px',
@@ -108,7 +115,7 @@ export default function Sidebar({
               marginBottom: '0.75rem',
             }}
           >
-            MENU
+            {t('nav.menu')}
           </span>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -147,7 +154,7 @@ export default function Sidebar({
                 />
               )}
               <LayoutDashboard size={18} color={current === 'Dashboard' ? '#0E4A32' : '#64748B'} />
-              <span>Dashboard</span>
+              <span>{t('nav.dashboard')}</span>
             </button>
 
             {/* Profile Nav Item */}
@@ -184,8 +191,23 @@ export default function Sidebar({
                   }}
                 />
               )}
-              <User size={18} color={current === 'Profile' ? '#0E4A32' : '#64748B'} />
-              <span>Profile</span>
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt="Profile"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    flexShrink: 0,
+                    border: current === 'Profile' ? '1.5px solid #0E4A32' : '1px solid #CBD5E1',
+                  }}
+                />
+              ) : (
+                <User size={18} color={current === 'Profile' ? '#0E4A32' : '#64748B'} />
+              )}
+              <span>{t('nav.profile')}</span>
             </button>
           </nav>
         </div>
@@ -204,7 +226,7 @@ export default function Sidebar({
               marginBottom: '0.75rem',
             }}
           >
-            GENERAL
+            {t('nav.general')}
           </span>
 
           <button
@@ -234,8 +256,27 @@ export default function Sidebar({
             }}
           >
             <LogOut size={18} />
-            <span>Logout</span>
+            <span>{t('nav.logout')}</span>
           </button>
+        </div>
+
+        {/* Section: LANGUAGE */}
+        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <span
+            style={{
+              display: 'block',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              color: '#9CA3AF',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              paddingLeft: '0.75rem',
+              marginBottom: '0.5rem',
+            }}
+          >
+            {t('nav.language')}
+          </span>
+          <LanguageSwitcher variant="light" />
         </div>
       </div>
 
@@ -254,11 +295,11 @@ export default function Sidebar({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
           <ShieldCheck size={16} color="#34D399" />
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#A7F3D0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            SkillSync Pro
+            {t('nav.proTitle')}
           </span>
         </div>
         <p style={{ fontSize: '0.8125rem', color: '#E2E8F0', lineHeight: 1.4, margin: '0 0 0.85rem 0' }}>
-          Accelerate your readiness score with live simulations.
+          {t('nav.proDesc')}
         </p>
         <button
           type="button"
@@ -277,7 +318,7 @@ export default function Sidebar({
             gap: '0.35rem',
           }}
         >
-          <span>Explore Pro</span>
+          <span>{t('nav.explorePro')}</span>
           <ArrowRight size={13} />
         </button>
       </div>

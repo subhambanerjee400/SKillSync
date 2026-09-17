@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { getUserProfile, getUserSkills } from '../lib/profile';
 import { calculateScore, saveScoreIfChanged } from '../lib/scoring';
 import { getRequiredSkillsForRole, ROLE_REQUIRED_SKILLS } from '../data/demoData';
 import LocationAutocomplete from '../components/LocationAutocomplete';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
   ArrowLeft,
   Code,
@@ -18,7 +21,11 @@ import {
   Loader2,
   Sparkles,
   Save,
+  Pencil,
+  Camera,
+  Check,
 } from 'lucide-react';
+import { PRESET_AVATARS, getAvatarUrl } from '../data/avatars';
 
 const SUGGESTED_SKILLS = {
   'Frontend Developer': [
@@ -105,8 +112,9 @@ const getRoleSkills = (role) => [
 ];
 
 export default function EditProfile() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,6 +122,18 @@ export default function EditProfile() {
 
   // Profile data
   const [profile, setProfile] = useState(null);
+  const [name, setName] = useState('');
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameSuccess, setUsernameSuccess] = useState('');
+
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarSuccess, setAvatarSuccess] = useState('');
+
   const [segment, setSegment] = useState('Software');
   const [role, setRole] = useState('Frontend Developer');
   const [location, setLocation] = useState('');
@@ -139,19 +159,38 @@ export default function EditProfile() {
 
         if (profileData) {
           setProfile(profileData);
+          const initialName =
+            profileData.name ||
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.name ||
+            (user.email ? user.email.split('@')[0] : '');
+          setName(initialName);
+          setUsernameInput(initialName);
+          setAvatarUrl(profileData.avatar_url || user.user_metadata?.avatar_url || user.avatar_url || '');
+
           if (profileData.segment) setSegment(profileData.segment);
           if (profileData.role) setRole(profileData.role);
           if (profileData.location) setLocation(profileData.location);
+        } else {
+          const initialName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.name ||
+            (user.email ? user.email.split('@')[0] : '');
+          setName(initialName);
+          setUsernameInput(initialName);
+          setAvatarUrl(user.user_metadata?.avatar_url || user.avatar_url || '');
         }
 
         if (Array.isArray(userSkillsData)) {
           const activeRole = profileData?.role || role;
           const allowedSkills = new Set(getRoleSkills(activeRole));
           setSkills(userSkillsData.filter((skill) => allowedSkills.has(skill)));
-          setInitialSkills(userSkillsData);
+          setInitialSkills(userSkillsData.filter((skill) => allowedSkills.has(skill)));
         }
       } catch (err) {
-        console.error('Error fetching edit profile data:', err);
+        console.error('[EditProfile] Error loading profile data:', err);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -166,22 +205,22 @@ export default function EditProfile() {
     };
   }, [user]);
 
-  // Adjust default role when segment toggles
+  // Handle segment toggle (defaults role to first in segment)
   const handleSegmentChange = (newSegment) => {
     setSegment(newSegment);
-    if (newSegment === 'Software') {
-      setRole('Frontend Developer');
-    } else {
-      setRole('Electrician');
-    }
-    setSkills([]);
-    setCustomSkillInput('');
+    const newRole = newSegment === 'Software' ? 'Frontend Developer' : 'Electrician';
+    setRole(newRole);
+    // Prune incompatible skills that do not exist in the new role
+    const newAllowed = new Set(getRoleSkills(newRole));
+    setSkills((prev) => prev.filter((s) => newAllowed.has(s)));
   };
 
+  // Handle role select change
   const handleRoleChange = (newRole) => {
     setRole(newRole);
-    setSkills([]);
-    setCustomSkillInput('');
+    // Keep only skills valid for the newly selected role
+    const newAllowed = new Set(getRoleSkills(newRole));
+    setSkills((prev) => prev.filter((s) => newAllowed.has(s)));
   };
 
   // Toggle skill selection
@@ -203,6 +242,81 @@ export default function EditProfile() {
     }
   };
 
+  // Save username inline
+  const handleSaveUsername = async (e) => {
+    if (e) e.preventDefault();
+    const trimmed = usernameInput.trim();
+    if (!trimmed) {
+      setUsernameError(t('editProfile.usernameRequired', 'Username cannot be empty.'));
+      return;
+    }
+    setUsernameError('');
+    setUsernameSaving(true);
+
+    try {
+      // 1. Update profiles table and shared AuthContext state
+      const { error: updateErr } = await updateProfile({ name: trimmed });
+
+      if (updateErr) {
+        console.warn('[EditProfile] Supabase username update warning:', updateErr.message);
+      }
+
+      // 2. Best-effort update of Supabase auth user metadata
+      try {
+        await supabase.auth.updateUser({
+          data: { name: trimmed, full_name: trimmed },
+        });
+      } catch (authErr) {}
+
+      // 3. Update local state
+      setName(trimmed);
+      const updatedProfile = { ...(profile || {}), id: user.id, name: trimmed };
+      setProfile(updatedProfile);
+
+      setIsEditingUsername(false);
+      setUsernameSuccess(t('editProfile.usernameUpdated', 'Username updated successfully!'));
+      setTimeout(() => setUsernameSuccess(''), 4000);
+    } catch (err) {
+      console.error('Error saving username:', err);
+      setUsernameError(err.message || 'Failed to update username');
+    } finally {
+      setUsernameSaving(false);
+    }
+  };
+
+  // Select preset avatar
+  const handleSelectAvatar = async (presetIdOrUrl) => {
+    setAvatarSaving(true);
+    try {
+      // 1. Update profiles table and shared AuthContext state
+      const { error: updateErr } = await updateProfile({ avatar_url: presetIdOrUrl });
+
+      if (updateErr) {
+        console.warn('[EditProfile] Supabase avatar_url update warning:', updateErr.message);
+      }
+
+      // 2. Best-effort update of Supabase auth user metadata
+      try {
+        await supabase.auth.updateUser({
+          data: { avatar_url: presetIdOrUrl, avatar: presetIdOrUrl },
+        });
+      } catch (authErr) {}
+
+      // 3. Update local state
+      setAvatarUrl(presetIdOrUrl);
+      const updatedProfile = { ...(profile || {}), id: user.id, avatar_url: presetIdOrUrl };
+      setProfile(updatedProfile);
+
+      setIsAvatarModalOpen(false);
+      setAvatarSuccess(t('editProfile.avatarUpdated', 'Avatar updated successfully!'));
+      setTimeout(() => setAvatarSuccess(''), 4000);
+    } catch (err) {
+      console.error('Error saving avatar:', err);
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
+
   // Remove skill
   const handleRemoveSkill = (skillToRemove) => {
     setSkills(skills.filter((s) => s !== skillToRemove));
@@ -214,7 +328,7 @@ export default function EditProfile() {
     setErrorMsg('');
 
     if (skills.length === 0) {
-      setErrorMsg('Please select or add at least one skill.');
+      setErrorMsg(t('editProfile.errSkills'));
       return;
     }
 
@@ -228,13 +342,20 @@ export default function EditProfile() {
         role,
         segment,
         location: location.trim(),
+        name: (name || profile?.name || '').trim(),
+        avatar_url: avatarUrl || profile?.avatar_url || null,
       };
 
-      console.log('[EditProfile] Updating profile role, segment, location:', { role, segment, location: location.trim() });
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role, segment, location: location.trim() })
-        .eq('id', user.id);
+      const updatePayload = {
+        role,
+        segment,
+        location: location.trim(),
+      };
+      if (name && name.trim()) updatePayload.name = name.trim();
+      if (avatarUrl) updatePayload.avatar_url = avatarUrl;
+
+      console.log('[EditProfile] Updating profile:', updatePayload);
+      const { error: profileError } = await updateProfile(updatePayload);
 
       if (profileError) {
         console.warn('[EditProfile] Supabase profile update error:', profileError.message);
@@ -324,7 +445,7 @@ export default function EditProfile() {
       >
         <Loader2 size={28} className="animate-spin" color="#10b981" />
         <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-          Loading profile details...
+          {t('editProfile.loading')}
         </span>
       </div>
     );
@@ -385,34 +506,37 @@ export default function EditProfile() {
                 borderRadius: '9999px',
               }}
             >
-              Edit Profile
+              {t('editProfile.badge')}
             </span>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '0.5rem 0.9rem',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            background: '#ffffff',
-            color: '#475569',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <LanguageSwitcher variant="light" compact />
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.9rem',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              color: '#475569',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+          >
+            <ArrowLeft size={16} />
+            <span>{t('editProfile.backBtn')}</span>
+          </button>
+        </div>
       </header>
 
       {/* Main Container */}
@@ -447,10 +571,10 @@ export default function EditProfile() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Update Target Role & Skills
+              {t('editProfile.title')}
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>
-              Change your career track or add newly acquired skills. Your readiness score and personalized roadmap will automatically recalculate.
+              {t('editProfile.subtitle')}
             </p>
           </div>
 
@@ -474,6 +598,463 @@ export default function EditProfile() {
             </div>
           )}
 
+          {/* User Identity & Avatar Card */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%)',
+              border: '1px solid #DCFCE7',
+              borderRadius: '14px',
+              padding: '1.25rem',
+              marginBottom: '1.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1.25rem',
+            }}
+          >
+            {/* Left: Avatar with Edit Badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <img
+                  src={getAvatarUrl(avatarUrl, name)}
+                  alt={name || 'Avatar'}
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    minWidth: '64px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid #FFFFFF',
+                    boxShadow: '0 4px 12px rgba(14, 74, 50, 0.15)',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  title={t('editProfile.chooseAvatar', 'Choose Avatar')}
+                  aria-label={t('editProfile.chooseAvatar', 'Choose Avatar')}
+                  style={{
+                    position: 'absolute',
+                    bottom: '-2px',
+                    right: '-2px',
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '50%',
+                    background: '#0E4A32',
+                    color: '#FFFFFF',
+                    border: '2px solid #FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    transition: 'transform 0.1s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <Camera size={13} />
+                </button>
+              </div>
+
+              {/* Middle: Username & Inline Edit Form */}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                {isEditingUsername ? (
+                  <form
+                    onSubmit={handleSaveUsername}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
+                  >
+                    <input
+                      type="text"
+                      value={usernameInput}
+                      onChange={(e) => setUsernameInput(e.target.value)}
+                      placeholder={t('editProfile.usernamePlaceholder', 'Enter username')}
+                      autoFocus
+                      style={{
+                        padding: '0.4rem 0.65rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1.5px solid #10B981',
+                        outline: 'none',
+                        color: '#0F172A',
+                        minWidth: '150px',
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={usernameSaving}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        background: '#0E4A32',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {usernameSaving ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        t('common.save', 'Save')
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingUsername(false);
+                        setUsernameInput(name);
+                        setUsernameError('');
+                      }}
+                      style={{
+                        padding: '0.4rem 0.65rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: '#F1F5F9',
+                        color: '#475569',
+                        border: '1px solid #CBD5E1',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('common.cancel', 'Cancel')}
+                    </button>
+                  </form>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <h2
+                      style={{
+                        fontSize: '1.15rem',
+                        fontWeight: 800,
+                        color: '#0F172A',
+                        margin: 0,
+                        lineHeight: 1.2,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {name || t('editProfile.unnamedUser', 'User')}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsernameInput(name);
+                        setIsEditingUsername(true);
+                      }}
+                      title={t('editProfile.editUsername', 'Edit Username')}
+                      aria-label={t('editProfile.editUsername', 'Edit Username')}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#0E4A32',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Subtitle Details */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.25rem',
+                    fontSize: '0.775rem',
+                    color: '#64748B',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user?.email}
+                  </span>
+                  <span>•</span>
+                  <span style={{ fontWeight: 600, color: '#0E4A32' }}>{role}</span>
+                </div>
+
+                {/* Inline Username Error */}
+                {usernameError && (
+                  <p style={{ fontSize: '0.75rem', color: '#DC2626', margin: '4px 0 0 0', fontWeight: 600 }}>
+                    {usernameError}
+                  </p>
+                )}
+
+                {/* Success Confirmation Toast */}
+                {(usernameSuccess || avatarSuccess) && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      marginTop: '0.35rem',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      background: '#DCFCE7',
+                      color: '#065F46',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Check size={12} strokeWidth={3} />
+                    <span>{usernameSuccess || avatarSuccess}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Choose Avatar Action Button */}
+            <button
+              type="button"
+              onClick={() => setIsAvatarModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 0.95rem',
+                borderRadius: '8px',
+                background: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                color: '#334155',
+                fontSize: '0.825rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#0E4A32';
+                e.currentTarget.style.color = '#0E4A32';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#CBD5E1';
+                e.currentTarget.style.color = '#334155';
+              }}
+            >
+              <Sparkles size={14} color="#10B981" />
+              <span>{t('editProfile.chooseAvatar', 'Choose Avatar')}</span>
+            </button>
+          </div>
+
+          {/* Preset Avatar Selection Modal */}
+          {isAvatarModalOpen && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(15, 23, 42, 0.6)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 100,
+                padding: '1rem',
+                boxSizing: 'border-box',
+              }}
+              onClick={() => setIsAvatarModalOpen(false)}
+            >
+              <div
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: '20px',
+                  padding: '1.5rem',
+                  maxWidth: '520px',
+                  width: '100%',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  border: '1px solid #E2E8F0',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '1.25rem',
+                  }}
+                >
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem 0' }}>
+                      {t('editProfile.avatarModalTitle', 'Choose Your Avatar')}
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>
+                      {t('editProfile.avatarModalSubtitle', 'Select a preset avatar to represent your profile across SkillSync.')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAvatarModalOpen(false)}
+                    style={{
+                      background: '#F1F5F9',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748B',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Grid of Preset Avatars */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gap: '0.75rem',
+                    marginBottom: '1.25rem',
+                  }}
+                >
+                  {PRESET_AVATARS.map((preset) => {
+                    const isSelected = avatarUrl === preset.id || avatarUrl === preset.url;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleSelectAvatar(preset.id)}
+                        disabled={avatarSaving}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '0.75rem 0.5rem',
+                          borderRadius: '12px',
+                          border: isSelected ? '2px solid #10B981' : '1px solid #E2E8F0',
+                          background: isSelected ? '#F0FDF4' : '#FFFFFF',
+                          cursor: 'pointer',
+                          transition: 'all 150ms ease',
+                          position: 'relative',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.borderColor = '#94A3B8';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.borderColor = '#E2E8F0';
+                        }}
+                      >
+                        {isSelected && (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              background: '#10B981',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Check size={11} strokeWidth={3} />
+                          </span>
+                        )}
+                        <img
+                          src={preset.url}
+                          alt={preset.name}
+                          style={{
+                            width: '54px',
+                            height: '54px',
+                            borderRadius: '50%',
+                            marginBottom: '0.5rem',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: isSelected ? '#065F46' : '#1E293B',
+                            textAlign: 'center',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {preset.name}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            color: preset.category === 'Trade' ? '#047857' : '#6D28D9',
+                            background: preset.category === 'Trade' ? '#ECFDF5' : '#F5F3FF',
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            marginTop: '4px',
+                          }}
+                        >
+                          {preset.category}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Option to revert to initials-based avatar */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderTop: '1px solid #F1F5F9',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAvatar('')}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      background: '#F8FAFC',
+                      color: '#475569',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('editProfile.useInitials', 'Reset to Initials Avatar')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAvatarModalOpen(false)}
+                    style={{
+                      padding: '0.45rem 1rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: '#0E4A32',
+                      color: '#FFFFFF',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('common.done', 'Done')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* 1. Industry Segment */}
             <div>
@@ -486,7 +1067,7 @@ export default function EditProfile() {
                   marginBottom: '0.4rem',
                 }}
               >
-                Industry Segment <span style={{ color: '#ef4444' }}>*</span>
+                {t('onboarding.industrySegment')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div
                 style={{
@@ -515,7 +1096,7 @@ export default function EditProfile() {
                   }}
                 >
                   <Code size={18} color={segment === 'Software' ? '#10b981' : 'currentColor'} />
-                  <span>Software</span>
+                  <span>{t('onboarding.software')}</span>
                 </button>
 
                 <button
@@ -538,7 +1119,7 @@ export default function EditProfile() {
                   }}
                 >
                   <Wrench size={18} color={segment === 'Trade' ? '#10b981' : 'currentColor'} />
-                  <span>Trade</span>
+                  <span>{t('onboarding.trade')}</span>
                 </button>
               </div>
             </div>
@@ -554,7 +1135,7 @@ export default function EditProfile() {
                   marginBottom: '0.4rem',
                 }}
               >
-                Target Role / Trade <span style={{ color: '#ef4444' }}>*</span>
+                {t('onboarding.targetRole')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative', marginBottom: '0.65rem' }}>
                 <Briefcase
@@ -659,12 +1240,12 @@ export default function EditProfile() {
                   marginBottom: '0.4rem',
                 }}
               >
-                Location (City) <span style={{ color: '#ef4444' }}>*</span>
+                {t('onboarding.location')} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <LocationAutocomplete
                 value={location}
                 onChange={setLocation}
-                placeholder="Search or enter city (e.g. Bengaluru, Delhi)..."
+                placeholder={t('onboarding.locationPlaceholder')}
                 required
               />
             </div>
@@ -686,10 +1267,10 @@ export default function EditProfile() {
                     color: '#334155',
                   }}
                 >
-                  Your Skills <span style={{ color: '#ef4444' }}>*</span>
+                  {t('onboarding.currentSkills')} <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <span style={{ fontSize: '0.775rem', color: '#64748b' }}>
-                  {skills.length} active
+                  {skills.length} {t('editProfile.activeCount')}
                 </span>
               </div>
 
@@ -726,7 +1307,7 @@ export default function EditProfile() {
                         boxSizing: 'border-box',
                       }}
                     >
-                      <span style={{ wordBreak: 'break-word' }}>{skill}</span>
+                      <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(skill, i18n.language)}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveSkill(skill)}
@@ -759,7 +1340,7 @@ export default function EditProfile() {
                     textAlign: 'center',
                   }}
                 >
-                  No skills selected yet. Choose from suggestions below or add custom skills.
+                  {t('editProfile.noSkillsSelected')}
                 </div>
               )}
 
@@ -775,7 +1356,7 @@ export default function EditProfile() {
                       handleAddCustomSkill();
                     }
                   }}
-                  placeholder="Add custom skill (press Enter)..."
+                  placeholder={t('onboarding.addCustomSkillPlaceholder')}
                   style={{
                     flex: 1,
                     minWidth: 0,
@@ -809,7 +1390,7 @@ export default function EditProfile() {
                   }}
                 >
                   <Plus size={15} />
-                  <span>Add</span>
+                  <span>{t('onboarding.addBtn')}</span>
                 </button>
               </div>
 
@@ -824,7 +1405,7 @@ export default function EditProfile() {
                     marginBottom: '0.4rem',
                   }}
                 >
-                  Suggested for {role}:
+                  {t('onboarding.suggestedForRole', { role })}
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', minWidth: 0, maxWidth: '100%' }}>
                   {roleSuggestions.map((suggestion) => {
@@ -854,7 +1435,7 @@ export default function EditProfile() {
                         }}
                       >
                         {isSelected && <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />}
-                        <span style={{ wordBreak: 'break-word' }}>{suggestion}</span>
+                        <span style={{ wordBreak: 'break-word' }}>{getSkillLabel(suggestion, i18n.language)}</span>
                       </button>
                     );
                   })}
@@ -880,7 +1461,7 @@ export default function EditProfile() {
                   cursor: 'pointer',
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
 
               <button
@@ -909,12 +1490,12 @@ export default function EditProfile() {
                 {isSubmitting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    <span>Saving Changes...</span>
+                    <span>{t('editProfile.savingChanges')}</span>
                   </>
                 ) : (
                   <>
                     <Save size={18} />
-                    <span>Save Changes</span>
+                    <span>{t('editProfile.saveChanges')}</span>
                   </>
                 )}
               </button>

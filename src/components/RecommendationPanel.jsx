@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, ArrowUpRight, Code, Layers, Sparkles, BookOpen, ExternalLink } from 'lucide-react';
 
 const ICON_THEMES = [
@@ -9,6 +10,8 @@ const ICON_THEMES = [
 ];
 
 export default function RecommendationPanel({ recommendations = [], notice = null }) {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -25,15 +28,15 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>
-            Recommended Pathways
+            {t('recommendations.title')}
           </h3>
           <p style={{ fontSize: '0.75rem', color: '#6B7280', margin: '2px 0 0 0' }}>
-            Curated bridge programs aligned to your missing competencies
+            {t('recommendations.subtitle')}
           </p>
         </div>
         <button
           type="button"
-          aria-label="Explore all learning pathways"
+          aria-label={t('recommendations.explore')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -58,7 +61,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
           }}
         >
           <Plus size={13} />
-          <span>Explore</span>
+          <span>{t('recommendations.explore')}</span>
         </button>
       </div>
 
@@ -99,10 +102,10 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
         >
           <BookOpen size={28} style={{ margin: '0 auto 0.5rem auto', color: '#9CA3AF' }} />
           <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', margin: '0 0 0.25rem 0' }}>
-            All competencies verified!
+            {t('recommendations.allVerified')}
           </p>
           <p style={{ fontSize: '0.78rem', color: '#6B7280', margin: 0 }}>
-            You have acquired all core skills for your role. No immediate bridge courses are required.
+            {t('recommendations.allVerifiedDesc')}
           </p>
         </div>
       ) : (
@@ -234,7 +237,7 @@ export default function RecommendationPanel({ recommendations = [], notice = nul
                     e.currentTarget.style.borderColor = '#E5E7EB';
                   }}
                 >
-                  <span>{rec.ctaText || 'View'}</span>
+                  <span>{rec.ctaText || t('recommendations.viewBtn')}</span>
                   <ArrowUpRight size={13} />
                 </a>
               </div>

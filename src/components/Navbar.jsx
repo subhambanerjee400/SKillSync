@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import LanguageSwitcher from './LanguageSwitcher';
+import { getAvatarUrl } from '../data/avatars';
 import {
   Bell,
   Search,
@@ -16,15 +20,17 @@ import {
 } from 'lucide-react';
 
 export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
-  const { user, role, switchRole, logout } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user, role, switchRole, logout, userName, userAvatar } = useAuth();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const roleConfig = {
-    student: { label: 'Student View', icon: GraduationCap, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.15)' },
-    institute: { label: 'Institute View', icon: Building2, color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)' },
-    industry: { label: 'Industry View', icon: Briefcase, color: '#06B6D4', bg: 'rgba(6, 182, 212, 0.15)' },
+    student: { label: t('nav.studentView'), icon: GraduationCap, color: '#6366F1', bg: 'rgba(99, 102, 241, 0.15)' },
+    institute: { label: t('nav.instituteView'), icon: Building2, color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)' },
+    industry: { label: t('nav.industryView'), icon: Briefcase, color: '#06B6D4', bg: 'rgba(6, 182, 212, 0.15)' },
   };
 
   const currentRoleInfo = roleConfig[role] || roleConfig.student;
@@ -57,7 +63,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
             color: 'var(--text-secondary)',
             background: 'rgba(255, 255, 255, 0.05)',
           }}
-          aria-label="Toggle Navigation"
+          aria-label={t('nav.toggleNavigation')}
         >
           {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -104,7 +110,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
         />
         <input
           type="text"
-          placeholder="Search skills, job roles, courses..."
+          placeholder={t('nav.searchPlaceholder')}
           style={{
             width: '100%',
             padding: '0.5rem 1rem 0.5rem 2.25rem',
@@ -119,7 +125,10 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
       </div>
 
       {/* Right Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Language Switcher */}
+        <LanguageSwitcher variant="dark" compact />
+
         {/* Quick Role Switcher Pill */}
         <div style={{ position: 'relative' }}>
           <button
@@ -159,12 +168,12 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
               }}
             >
               <div style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
-                Instant Role Switcher
+                {t('nav.instantRoleSwitcher')}
               </div>
               {[
-                { r: 'student', label: 'Student Portal', icon: GraduationCap, color: '#6366F1' },
-                { r: 'institute', label: 'Institute Portal', icon: Building2, color: '#10B981' },
-                { r: 'industry', label: 'Industry Portal', icon: Briefcase, color: '#06B6D4' },
+                { r: 'student', label: t('nav.studentPortal'), icon: GraduationCap, color: '#6366F1' },
+                { r: 'institute', label: t('nav.institutePortal'), icon: Building2, color: '#10B981' },
+                { r: 'industry', label: t('nav.industryPortal'), icon: Briefcase, color: '#06B6D4' },
               ].map(({ r, label, icon: ItemIcon, color }) => (
                 <button
                   key={r}
@@ -245,7 +254,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
               }}
             >
               <h5 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                Recent Alerts
+                {t('nav.recentAlerts')}
               </h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
                 <div style={{ padding: '0.5rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(99,102,241,0.2)' }}>
@@ -273,11 +282,12 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
               borderRadius: 'var(--radius-full)',
               background: 'rgba(30, 41, 59, 0.6)',
               border: '1px solid var(--border-subtle)',
+              cursor: 'pointer',
             }}
           >
             <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-              alt={user?.name || 'User'}
+              src={userAvatar}
+              alt={userName}
               style={{
                 width: '32px',
                 height: '32px',
@@ -286,7 +296,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
               }}
             />
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', paddingRight: '4px' }}>
-              {(user?.name || user?.full_name || user?.email?.split('@')[0] || 'Member').split(' ')[0]}
+              {userName.split(' ')[0]}
             </span>
           </button>
 
@@ -308,43 +318,77 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
             >
               <div style={{ paddingBottom: '0.65rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.5rem' }}>
                 <p style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-                  {user?.name || user?.full_name || user?.email?.split('@')[0] || 'Member'}
+                  {userName}
                 </p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.email}</p>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    marginTop: '0.35rem',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: currentRoleInfo.color,
-                  }}
-                >
-                  {user?.institute || user?.company || user?.org_name || user?.role || 'Member'}
-                </span>
-              </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.email}</p>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginTop: '0.35rem',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: currentRoleInfo.color,
+                      }}
+                    >
+                      {user?.institute || user?.company || user?.org_name || user?.role || t('nav.member')}
+                    </span>
+                  </div>
 
-              <button
-                onClick={logout}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.65rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.8125rem',
-                  color: '#FB7185',
-                  borderRadius: 'var(--radius-sm)',
-                  justifyContent: 'flex-start',
-                }}
-              >
-                <LogOut size={15} />
-                <span>Sign Out</span>
-              </button>
+                  <button
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate('/edit-profile');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.65rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.8125rem',
+                      color: 'var(--text-primary)',
+                      borderRadius: 'var(--radius-sm)',
+                      justifyContent: 'flex-start',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginBottom: '0.25rem',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <User size={15} />
+                    <span>{t('nav.profile')}</span>
+                  </button>
+
+                  <button
+                    onClick={logout}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.65rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.8125rem',
+                      color: '#FB7185',
+                      borderRadius: 'var(--radius-sm)',
+                      justifyContent: 'flex-start',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <LogOut size={15} />
+                    <span>{t('nav.signOut')}</span>
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
       </div>
     </header>
   );

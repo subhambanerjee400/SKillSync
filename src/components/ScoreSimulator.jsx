@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { Sparkles, RotateCcw, Check, Plus, ArrowRight, TrendingUp, Info } from 'lucide-react';
 import { calculateScore } from '../lib/scoring';
 
@@ -9,6 +11,7 @@ export default function ScoreSimulator({
   missingSkills = [],
   missingDetails = [],
 }) {
+  const { t, i18n } = useTranslation();
   // Local set of skill names that the user has toggled "on" in the simulation
   const [simulatedSkills, setSimulatedSkills] = useState(() => new Set());
 
@@ -141,7 +144,7 @@ export default function ScoreSimulator({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#111827', margin: 0 }}>
-                Score Simulator
+                {t('simulator.title')}
               </h3>
               <span
                 style={{
@@ -156,11 +159,11 @@ export default function ScoreSimulator({
                   border: isSimulating ? '1px solid #A7F3D0' : '1px solid #E5E7EB',
                 }}
               >
-                {isSimulating ? 'Sandbox Active' : 'What-If Mode'}
+                {isSimulating ? t('simulator.sandboxActive') : t('simulator.whatIfMode')}
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '2px 0 0 0' }}>
-              Try it: see how your score changes as you learn new skills
+              {t('simulator.subtitle')}
             </p>
           </div>
         </div>
@@ -170,7 +173,7 @@ export default function ScoreSimulator({
           type="button"
           onClick={handleReset}
           disabled={!isSimulating}
-          aria-label="Reset simulation to real score"
+          aria-label={t('simulator.reset')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -201,7 +204,7 @@ export default function ScoreSimulator({
           }}
         >
           <RotateCcw size={13} />
-          <span>Reset</span>
+          <span>{t('simulator.reset')}</span>
         </button>
       </div>
 
@@ -224,7 +227,7 @@ export default function ScoreSimulator({
           {/* Current Score */}
           <div>
             <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Real Score
+              {t('simulator.realScore')}
             </span>
             <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#111827', lineHeight: 1.1 }}>
               {currentScore}%
@@ -236,7 +239,7 @@ export default function ScoreSimulator({
           {/* Simulated Score */}
           <div>
             <span style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: isSimulating ? '#065F46' : '#6B7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Simulated Score
+              {t('simulator.simulatedScore')}
             </span>
             <span
               style={{
@@ -270,11 +273,11 @@ export default function ScoreSimulator({
               }}
             >
               <TrendingUp size={14} color="#34D399" />
-              <span>+{delta}% Potential Increase</span>
+              <span>+{delta}% {t('simulator.potentialIncrease')}</span>
             </div>
           ) : (
             <span style={{ fontSize: '0.78rem', color: '#9CA3AF', fontStyle: 'italic' }}>
-              Click missing skills below to project readiness gain
+              {t('simulator.inactivePrompt')}
             </span>
           )}
         </div>
@@ -284,7 +287,7 @@ export default function ScoreSimulator({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151' }}>
-            Toggle Skills to Simulate Mastery ({simulatedSkills.size} of {missingSkills.length} selected):
+            {t('simulator.toggleHeader', { selected: simulatedSkills.size, total: missingSkills.length })}
           </span>
         </div>
 
@@ -301,7 +304,7 @@ export default function ScoreSimulator({
               fontWeight: 600,
             }}
           >
-            🎉 You have already acquired all core required skills for this role!
+            {t('simulator.allAcquired')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -374,7 +377,7 @@ export default function ScoreSimulator({
                     {isSelected ? <Check size={12} strokeWidth={3} /> : <Plus size={12} />}
                   </span>
 
-                  <span style={{ wordBreak: 'break-word', flexShrink: 1 }}>{skill}</span>
+                  <span style={{ wordBreak: 'break-word', flexShrink: 1 }}>{getSkillLabel(skill, i18n.language)}</span>
 
                   {/* Weight / Rising pill */}
                   {weight !== undefined && (
@@ -389,7 +392,7 @@ export default function ScoreSimulator({
                         flexShrink: 0,
                       }}
                     >
-                      {isRising ? `+${weight} (rising)` : `+${weight}`}
+                      {isRising ? `+${weight} (${t('roadmap.risingDemand')})` : `+${weight}`}
                     </span>
                   )}
                 </button>
@@ -413,7 +416,7 @@ export default function ScoreSimulator({
       >
         <Info size={13} style={{ flexShrink: 0 }} />
         <span>
-          Purely illustrative client-side sandbox. Simulating skills does not write to your profile or historical records.
+          {t('simulator.disclaimer')}
         </span>
       </div>
     </div>

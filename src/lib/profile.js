@@ -38,6 +38,7 @@ export async function getUserProfile(userId) {
       .maybeSingle();
 
     if (data && data.id) {
+      safeStorage.setItem(`skillsync_profile_${userId}`, JSON.stringify(data));
       return data;
     }
   } catch (err) {
@@ -91,4 +92,12 @@ export async function getUserSkills(userId) {
   }
 
   return [];
+}
+
+/**
+ * Persist a user's profile to local storage cache for instant retrieval.
+ */
+export function saveProfileLocally(userId, profileData) {
+  if (!userId || !profileData) return;
+  safeStorage.setItem(`skillsync_profile_${userId}`, JSON.stringify(profileData));
 }

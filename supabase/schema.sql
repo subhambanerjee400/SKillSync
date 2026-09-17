@@ -28,6 +28,7 @@ CREATE TABLE public.profiles (
     role TEXT NOT NULL,
     experience TEXT NOT NULL,
     location TEXT NOT NULL,
+    avatar_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

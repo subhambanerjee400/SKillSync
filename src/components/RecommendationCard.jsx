@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { getSkillLabel } from '../i18n/skillLabels';
 import { Clock, Award, Star, ExternalLink, Check, Sparkles, BookOpen } from 'lucide-react';
 
 export default function RecommendationCard({
   course,
   onEnroll,
 }) {
+  const { i18n } = useTranslation();
   const [isEnrolled, setIsEnrolled] = useState(course.enrolled || false);
 
   const handleEnrollClick = (e) => {
@@ -82,7 +85,7 @@ export default function RecommendationCard({
               Target Skill
             </span>
             <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {course.skillTarget}
+              {getSkillLabel(course.skillTarget, i18n.language)}
             </div>
           </div>
           <span
