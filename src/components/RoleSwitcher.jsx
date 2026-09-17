@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { USER_ROLES, normalizeRole } from '../lib/userRoles';
-import { Building2, User, ChevronDown, Check } from 'lucide-react';
+import { Building2, User, Briefcase, ChevronDown, Check } from 'lucide-react';
 
 export default function RoleSwitcher({ variant = 'light' }) {
   const { userRoles, activeRole, switchActiveRole } = useAuth();
@@ -30,7 +30,12 @@ export default function RoleSwitcher({ variant = 'light' }) {
 
   // Determine current effective role
   const isInstitutionPage = location.pathname.includes('/institution');
-  const currentRole = isInstitutionPage ? USER_ROLES.INSTITUTION : (normalizeRole(activeRole) || USER_ROLES.JOB_SEEKER);
+  const isIndustryPage = location.pathname.includes('/industry');
+  const currentRole = isInstitutionPage
+    ? USER_ROLES.INSTITUTION
+    : isIndustryPage
+    ? USER_ROLES.INDUSTRY_PARTNER
+    : (normalizeRole(activeRole) || USER_ROLES.JOB_SEEKER);
 
   const handleSelectRole = (targetRole) => {
     setIsOpen(false);
@@ -38,6 +43,8 @@ export default function RoleSwitcher({ variant = 'light' }) {
 
     if (targetRole === USER_ROLES.INSTITUTION) {
       navigate('/institution-dashboard');
+    } else if (targetRole === USER_ROLES.INDUSTRY_PARTNER) {
+      navigate('/industry-dashboard');
     } else {
       navigate('/dashboard');
     }
@@ -54,10 +61,17 @@ export default function RoleSwitcher({ variant = 'light' }) {
     },
     [USER_ROLES.INSTITUTION]: {
       label: 'Institution',
-      sublabel: 'Portal & Analytics',
+      sublabel: 'Curriculum & Analytics',
       icon: Building2,
       color: '#0284C7',
       bg: '#E0F2FE',
+    },
+    [USER_ROLES.INDUSTRY_PARTNER]: {
+      label: 'Industry Partner',
+      sublabel: 'Demand & Hiring Insights',
+      icon: Briefcase,
+      color: '#8B5CF6',
+      bg: '#F5F3FF',
     },
   };
 

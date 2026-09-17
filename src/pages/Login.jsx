@@ -8,7 +8,11 @@ import {
   USER_ROLES,
   getPendingRole,
   getUserRoles,
+  addUserRole,
+  savePendingRole,
+  clearPendingRole,
   normalizeRole,
+  getRoleDisplayLabel,
 } from '../lib/userRoles';
 import AuthLayout from '../components/AuthLayout';
 import {
@@ -53,7 +57,7 @@ export default function Login() {
 
     if (roleParam) {
       const normalized = normalizeRole(roleParam);
-      const roleLabel = normalized === USER_ROLES.INSTITUTION ? 'Training Institution' : 'Job Seeker';
+      const roleLabel = getRoleDisplayLabel(normalized);
       // Ensure pending role is kept in session storage
       savePendingRole({
         role: normalized,
@@ -91,6 +95,10 @@ export default function Login() {
     const singleRole = roles[0] ? normalizeRole(roles[0]) : USER_ROLES.JOB_SEEKER;
     if (singleRole === USER_ROLES.INSTITUTION) {
       navigate('/institution-dashboard', { replace: true });
+      return;
+    }
+    if (singleRole === USER_ROLES.INDUSTRY_PARTNER) {
+      navigate('/industry-dashboard', { replace: true });
       return;
     }
 

@@ -6,6 +6,7 @@ import { getUserProfile } from '../lib/profile';
 import {
   User,
   Building2,
+  Factory,
   ArrowRight,
   Sparkles,
   TrendingUp,
@@ -13,6 +14,7 @@ import {
   Users,
   LogOut,
   ShieldCheck,
+  Briefcase,
 } from 'lucide-react';
 
 export default function RoleSelect() {
@@ -24,6 +26,8 @@ export default function RoleSelect() {
 
     if (chosenRole === USER_ROLES.INSTITUTION) {
       navigate('/institution-dashboard', { replace: true });
+    } else if (chosenRole === USER_ROLES.INDUSTRY_PARTNER) {
+      navigate('/industry-dashboard', { replace: true });
     } else {
       // For job_seeker, check if onboarding needed
       if (user?.id) {
@@ -157,7 +161,7 @@ export default function RoleSelect() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '2.5rem clamp(1rem, 4vw, 2rem)',
-          maxWidth: '860px',
+          maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
         }}
@@ -180,7 +184,7 @@ export default function RoleSelect() {
               marginBottom: '1rem',
             }}
           >
-            <Sparkles size={14} /> One Account · Multiple Roles
+            <Sparkles size={14} /> One Account · Multiple Verified Roles
           </span>
           <h1
             style={{
@@ -198,15 +202,15 @@ export default function RoleSelect() {
               fontSize: '1rem',
               color: '#94A3B8',
               margin: 0,
-              maxWidth: '520px',
+              maxWidth: '620px',
               lineHeight: 1.5,
             }}
           >
-            Your account holds multiple verified workspaces. Select how you would like to proceed for this session. You can switch anytime.
+            Your verified SkillSync account holds multiple access workspaces. Select the workspace you want to operate in for this session. You can switch anytime.
           </p>
         </div>
 
-        {/* Two Role Cards */}
+        {/* Three Role Cards Grid */}
         <div
           style={{
             display: 'grid',
@@ -217,6 +221,7 @@ export default function RoleSelect() {
         >
           {/* 1. Job Seeker Card */}
           <div
+            id="role-card-job-seeker"
             onClick={() => handleSelectRole(USER_ROLES.JOB_SEEKER)}
             style={{
               background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -324,6 +329,7 @@ export default function RoleSelect() {
 
           {/* 2. Institution Card */}
           <div
+            id="role-card-institution"
             onClick={() => handleSelectRole(USER_ROLES.INSTITUTION)}
             style={{
               background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -387,7 +393,7 @@ export default function RoleSelect() {
                   color: '#FFFFFF',
                 }}
               >
-                Institution
+                Training Institution
               </h2>
               <p
                 style={{
@@ -397,17 +403,17 @@ export default function RoleSelect() {
                   margin: '0 0 1.5rem 0',
                 }}
               >
-                Review regional talent benchmarks, curriculum alignment, aggregate candidate readiness, and skill deficiency trends.
+                Report emerging training curriculum skills, review regional talent benchmarks, and track trainee competencies.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#CBD5E1' }}>
-                  <Users size={15} color="#38BDF8" />
-                  <span>Cohort readiness overview</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#38BDF8' }}>
                   <TrendingUp size={15} color="#38BDF8" />
-                  <span>Regional skill gap analysis</span>
+                  <span>Report emerging curriculum skills</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#CBD5E1' }}>
+                  <Users size={15} color="#38BDF8" />
+                  <span>Cohort readiness telemetry</span>
                 </div>
               </div>
             </div>
@@ -425,6 +431,114 @@ export default function RoleSelect() {
               }}
             >
               <span>Continue as Institution</span>
+              <ArrowRight size={18} />
+            </div>
+          </div>
+
+          {/* 3. Industry Partner Card */}
+          <div
+            id="role-card-industry"
+            onClick={() => handleSelectRole(USER_ROLES.INDUSTRY_PARTNER)}
+            style={{
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '20px',
+              padding: '2rem 1.75rem',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#A855F7';
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 20px 30px -10px rgba(168, 85, 247, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '16px',
+                  background: 'rgba(168, 85, 247, 0.15)',
+                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#C084FC',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <Factory size={28} />
+              </div>
+
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: '#C084FC',
+                  marginBottom: '0.25rem',
+                }}
+              >
+                Hiring & Corporate Partner
+              </div>
+              <h2
+                style={{
+                  fontSize: '1.45rem',
+                  fontWeight: 700,
+                  margin: '0 0 0.75rem 0',
+                  color: '#FFFFFF',
+                }}
+              >
+                Industry Partner
+              </h2>
+              <p
+                style={{
+                  color: '#94A3B8',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.5,
+                  margin: '0 0 1.5rem 0',
+                }}
+              >
+                Report skills in hiring demand, broadcast openings, and explore calibrated candidate talent pipelines.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#CBD5E1' }}>
+                  <Briefcase size={15} color="#C084FC" />
+                  <span>Report in-demand hiring skills</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: '#CBD5E1' }}>
+                  <Target size={15} color="#C084FC" />
+                  <span>Candidate competency discovery</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '1rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                color: '#C084FC',
+                fontWeight: 600,
+                fontSize: '0.92rem',
+              }}
+            >
+              <span>Continue as Industry Partner</span>
               <ArrowRight size={18} />
             </div>
           </div>

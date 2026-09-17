@@ -446,7 +446,9 @@ export function AuthProvider({ children }) {
             account_role: chosenRole,
             institution_name: metadata.institution_name || metadata.org_name || '',
             registration_number: metadata.registration_number || '',
-            org_name: metadata.org_name || metadata.institution_name || '',
+            company_name: metadata.company_name || metadata.companyName || metadata.org_name || '',
+            industry_sector: metadata.industry_sector || metadata.industrySector || '',
+            org_name: metadata.org_name || metadata.institution_name || metadata.company_name || '',
             target_role: metadata.target_role || metadata.targetRole || '',
           },
         },
@@ -487,7 +489,9 @@ export function AuthProvider({ children }) {
               account_role: chosenRole,
               institution_name: metadata.institution_name || metadata.org_name || '',
               registration_number: metadata.registration_number || '',
-              org_name: metadata.org_name || metadata.institution_name || '',
+              company_name: metadata.company_name || metadata.companyName || metadata.org_name || '',
+              industry_sector: metadata.industry_sector || metadata.industrySector || '',
+              org_name: metadata.org_name || metadata.institution_name || metadata.company_name || '',
             },
           };
 

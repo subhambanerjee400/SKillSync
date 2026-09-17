@@ -258,7 +258,7 @@ export default function App() {
           <Route
             path="/industry-dashboard"
             element={
-              <AccountRoleRoute accountRole="industry">
+              <AccountRoleRoute accountRole="industry_partner">
                 <IndustryDashboardPreview />
               </AccountRoleRoute>
             }

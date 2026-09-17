@@ -40,11 +40,11 @@ CREATE TABLE public.accounts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- User roles table: supports multiple roles (job_seeker + institution) per single account
+-- User roles table: supports multiple roles (job_seeker + institution + industry_partner) per single account
 CREATE TABLE public.user_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL CHECK (role IN ('job_seeker', 'institution')),
+    role TEXT NOT NULL CHECK (role IN ('job_seeker', 'institution', 'industry_partner')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     CONSTRAINT unique_user_role UNIQUE (user_id, role)
 );

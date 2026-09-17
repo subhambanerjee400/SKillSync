@@ -3,6 +3,7 @@ import { supabase } from './supabase.js';
 export const USER_ROLES = {
   JOB_SEEKER: 'job_seeker',
   INSTITUTION: 'institution',
+  INDUSTRY_PARTNER: 'industry_partner',
 };
 
 // Safe storage wrapper for browser storage or in-memory fallback
@@ -85,16 +86,34 @@ export const safeSessionStorage = {
 };
 
 /**
- * Normalizes any role string into canonical 'job_seeker' or 'institution'.
+ * Normalizes any role string into canonical 'job_seeker', 'institution', or 'industry_partner'.
  */
 export function normalizeRole(role) {
   if (!role) return USER_ROLES.JOB_SEEKER;
   const clean = String(role).trim().toLowerCase();
   if (clean === 'institution') return USER_ROLES.INSTITUTION;
+  if (
+    clean === 'industry_partner' ||
+    clean === 'industry' ||
+    clean === 'employer' ||
+    clean === 'partner'
+  ) {
+    return USER_ROLES.INDUSTRY_PARTNER;
+  }
   if (clean === 'job_seeker' || clean === 'user' || clean === 'student') {
     return USER_ROLES.JOB_SEEKER;
   }
   return clean;
+}
+
+/**
+ * Returns user-facing friendly role label.
+ */
+export function getRoleDisplayLabel(role) {
+  const norm = normalizeRole(role);
+  if (norm === USER_ROLES.INSTITUTION) return 'Training Institution';
+  if (norm === USER_ROLES.INDUSTRY_PARTNER) return 'Industry Partner';
+  return 'Job Seeker';
 }
 
 /**
@@ -187,7 +206,7 @@ export async function addUserRole(userId, role, metadata = {}) {
   const updatedRoles = Array.from(new Set([...currentRoles, normalized]));
   safeStorage.setItem(`skillsync_user_roles_${userId}`, JSON.stringify(updatedRoles));
 
-  // 3. If institution metadata provided, persist locally for that institution role
+  // 3. If institution or industry metadata provided, persist locally
   if (normalized === USER_ROLES.INSTITUTION && (metadata.institution_name || metadata.org_name)) {
     try {
       const instData = {
@@ -196,6 +215,15 @@ export async function addUserRole(userId, role, metadata = {}) {
         updatedAt: new Date().toISOString(),
       };
       safeStorage.setItem(`skillsync_institution_${userId}`, JSON.stringify(instData));
+    } catch (e) { }
+  } else if (normalized === USER_ROLES.INDUSTRY_PARTNER && (metadata.company_name || metadata.org_name || metadata.industry_sector)) {
+    try {
+      const indData = {
+        companyName: metadata.company_name || metadata.org_name || '',
+        industrySector: metadata.industry_sector || '',
+        updatedAt: new Date().toISOString(),
+      };
+      safeStorage.setItem(`skillsync_industry_${userId}`, JSON.stringify(indData));
     } catch (e) { }
   }
 

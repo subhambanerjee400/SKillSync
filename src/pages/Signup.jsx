@@ -10,6 +10,7 @@ import {
   findExistingAccountByEmail,
   savePendingRole,
   normalizeRole,
+  getRoleDisplayLabel,
 } from '../lib/userRoles';
 import AuthLayout from '../components/AuthLayout';
 import {
@@ -27,6 +28,7 @@ import {
   Building2,
   FileText,
   Sparkles,
+  Factory,
 } from 'lucide-react';
 
 export default function Signup() {
@@ -43,6 +45,10 @@ export default function Signup() {
   // Institution-specific fields
   const [institutionName, setInstitutionName] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
+
+  // Industry-specific fields
+  const [companyName, setCompanyName] = useState('');
+  const [industrySector, setIndustrySector] = useState('');
 
   const [errorMsg, setErrorMsg] = useState('');
   const [reassuranceMsg, setReassuranceMsg] = useState('');
@@ -67,7 +73,7 @@ export default function Signup() {
   }, [user, navigate]);
 
   const roleLabel = (role) => {
-    return normalizeRole(role) === USER_ROLES.INSTITUTION ? 'Training Institution' : 'Job Seeker';
+    return getRoleDisplayLabel(role);
   };
 
   const handleSubmit = async (e) => {
@@ -95,6 +101,10 @@ export default function Signup() {
       setErrorMsg('Please enter your Institution Name');
       return;
     }
+    if (accountRole === USER_ROLES.INDUSTRY_PARTNER && !companyName.trim()) {
+      setErrorMsg('Please enter your Company / Organization Name');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -116,7 +126,7 @@ export default function Signup() {
         return;
       }
 
-      // Edge case: Different role registration attempt (e.g. job_seeker adding institution)
+      // Edge case: Different role registration attempt (e.g. job_seeker adding institution or industry)
       const targetLabel = roleLabel(normalizedChosenRole);
       savePendingRole({
         role: normalizedChosenRole,
@@ -124,6 +134,8 @@ export default function Signup() {
         fullName: fullName.trim(),
         institution_name: institutionName.trim(),
         registration_number: registrationNumber.trim(),
+        company_name: companyName.trim(),
+        industry_sector: industrySector.trim(),
       });
 
       setIsSubmitting(false);
@@ -140,6 +152,8 @@ export default function Signup() {
         account_role: accountRole,
         institution_name: institutionName.trim(),
         registration_number: registrationNumber.trim(),
+        company_name: companyName.trim(),
+        industry_sector: industrySector.trim(),
       });
 
       setSuccessMsg(t('auth.accountCreatedSuccess') || 'Account created successfully!');
@@ -170,6 +184,8 @@ export default function Signup() {
           fullName: fullName.trim(),
           institution_name: institutionName.trim(),
           registration_number: registrationNumber.trim(),
+          company_name: companyName.trim(),
+          industry_sector: industrySector.trim(),
         });
 
         setReassuranceMsg(
@@ -294,7 +310,10 @@ export default function Signup() {
                 {t('auth.roleJobSeeker') || 'Job Seeker (Candidate / Trainee)'}
               </option>
               <option value={USER_ROLES.INSTITUTION}>
-                {t('auth.roleInstitution') || 'Institution (ITI / Polytechnic / University)'}
+                {t('auth.roleInstitution') || 'Training Institution (ITI / Polytechnic / University)'}
+              </option>
+              <option value={USER_ROLES.INDUSTRY_PARTNER}>
+                Industry Partner (Company / Hiring Employer)
               </option>
             </select>
           </div>
@@ -303,7 +322,11 @@ export default function Signup() {
         {/* Full Name / Representative Name */}
         <div className="auth-field-group">
           <label htmlFor="signup-name" className="auth-field-label">
-            {accountRole === USER_ROLES.INSTITUTION ? 'Representative Full Name' : t('auth.fullNameLabel') || 'Full Name'}
+            {accountRole === USER_ROLES.INSTITUTION
+              ? 'Representative Full Name'
+              : accountRole === USER_ROLES.INDUSTRY_PARTNER
+              ? 'Representative / Hiring Manager Name'
+              : t('auth.fullNameLabel') || 'Full Name'}
           </label>
           <div className="auth-input-box">
             <div className="auth-input-icon">
@@ -319,7 +342,13 @@ export default function Signup() {
                 setFullName(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              placeholder={accountRole === USER_ROLES.INSTITUTION ? 'e.g. Dr. Rajesh Sharma' : t('auth.fullNamePlaceholder') || 'e.g. Subham Banerjee'}
+              placeholder={
+                accountRole === USER_ROLES.INSTITUTION
+                  ? 'e.g. Dr. Rajesh Sharma'
+                  : accountRole === USER_ROLES.INDUSTRY_PARTNER
+                  ? 'e.g. Priya Mukherjee (Talent Acquisition Lead)'
+                  : t('auth.fullNamePlaceholder') || 'e.g. Subham Banerjee'
+              }
               className="auth-input-control"
             />
           </div>
@@ -365,6 +394,53 @@ export default function Signup() {
                   value={registrationNumber}
                   onChange={(e) => setRegistrationNumber(e.target.value)}
                   placeholder="e.g. NCVT/DGET-WB-10492"
+                  className="auth-input-control"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Industry Partner Specific Fields */}
+        {accountRole === USER_ROLES.INDUSTRY_PARTNER && (
+          <>
+            <div className="auth-field-group">
+              <label htmlFor="signup-company-name" className="auth-field-label">
+                Company / Organization Name
+              </label>
+              <div className="auth-input-box">
+                <div className="auth-input-icon">
+                  <Building2 size={18} />
+                </div>
+                <input
+                  id="signup-company-name"
+                  type="text"
+                  required
+                  value={companyName}
+                  onChange={(e) => {
+                    setCompanyName(e.target.value);
+                    if (errorMsg) setErrorMsg('');
+                  }}
+                  placeholder="e.g. Tata Power / Schneider Electric"
+                  className="auth-input-control"
+                />
+              </div>
+            </div>
+
+            <div className="auth-field-group">
+              <label htmlFor="signup-industry-sector" className="auth-field-label">
+                Industry Sector / Domain (Optional)
+              </label>
+              <div className="auth-input-box">
+                <div className="auth-input-icon">
+                  <Briefcase size={18} />
+                </div>
+                <input
+                  id="signup-industry-sector"
+                  type="text"
+                  value={industrySector}
+                  onChange={(e) => setIndustrySector(e.target.value)}
+                  placeholder="e.g. Electrical, Renewable Energy, Industrial Automation"
                   className="auth-input-control"
                 />
               </div>
@@ -448,6 +524,8 @@ export default function Signup() {
               <span>
                 {accountRole === USER_ROLES.INSTITUTION
                   ? 'Register Institution Role'
+                  : accountRole === USER_ROLES.INDUSTRY_PARTNER
+                  ? 'Register Industry Partner Role'
                   : t('auth.createAccountBtn') || 'Create Account'}
               </span>
               <ArrowRight size={17} />

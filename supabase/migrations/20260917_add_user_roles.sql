@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS public.user_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    role TEXT NOT NULL CHECK (role IN ('job_seeker', 'institution')),
+    role TEXT NOT NULL CHECK (role IN ('job_seeker', 'institution', 'industry_partner')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     CONSTRAINT unique_user_role UNIQUE (user_id, role)
 );
@@ -50,6 +50,8 @@ BEGIN
     NEW.id,
     CASE NEW.raw_user_meta_data->>'account_role'
       WHEN 'institution' THEN 'institution'
+      WHEN 'industry_partner' THEN 'industry_partner'
+      WHEN 'industry' THEN 'industry_partner'
       ELSE 'job_seeker'
     END
   )
@@ -69,6 +71,8 @@ SELECT
     user_id, 
     CASE account_role 
         WHEN 'institution' THEN 'institution'
+        WHEN 'industry_partner' THEN 'industry_partner'
+        WHEN 'industry' THEN 'industry_partner'
         ELSE 'job_seeker'
     END
 FROM public.accounts

@@ -5,6 +5,7 @@ export const ACCOUNT_ROLES = {
   JOB_SEEKER: 'job_seeker',
   INSTITUTION: 'institution',
   INDUSTRY: 'industry',
+  INDUSTRY_PARTNER: 'industry_partner',
 };
 
 export function saveAccountRoleLocally(key, role) {
@@ -57,6 +58,7 @@ export function getAccountHomePath(user, explicitRole = null) {
     case ACCOUNT_ROLES.INSTITUTION:
       return '/institution-dashboard';
     case ACCOUNT_ROLES.INDUSTRY:
+    case ACCOUNT_ROLES.INDUSTRY_PARTNER:
       return '/industry-dashboard';
     default:
       return '/dashboard';
