@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { USER_ROLES, normalizeRole } from '../lib/userRoles';
+import { USER_ROLES, normalizeRole, addUserRole } from '../lib/userRoles';
 import { Building2, User, Briefcase, ChevronDown, Check } from 'lucide-react';
 
+const ALL_SYSTEM_ROLES = [
+  USER_ROLES.JOB_SEEKER,
+  USER_ROLES.INSTITUTION,
+  USER_ROLES.INDUSTRY_PARTNER,
+];
+
 export default function RoleSwitcher({ variant = 'light' }) {
-  const { userRoles, activeRole, switchActiveRole } = useAuth();
+  const { user, userRoles, activeRole, switchActiveRole, refreshUserRoles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -23,11 +29,6 @@ export default function RoleSwitcher({ variant = 'light' }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // If user only has one role (or no roles yet), do not show the switcher
-  if (!userRoles || userRoles.length <= 1) {
-    return null;
-  }
-
   // Determine current effective role
   const isInstitutionPage = location.pathname.includes('/institution');
   const isIndustryPage = location.pathname.includes('/industry');
@@ -37,9 +38,24 @@ export default function RoleSwitcher({ variant = 'light' }) {
     ? USER_ROLES.INDUSTRY_PARTNER
     : (normalizeRole(activeRole) || USER_ROLES.JOB_SEEKER);
 
-  const handleSelectRole = (targetRole) => {
+  const handleSelectRole = async (targetRole) => {
     setIsOpen(false);
     switchActiveRole(targetRole);
+
+    // Ensure user possesses target role in multi-role system so route guard permits navigation
+    if (user?.id) {
+      try {
+        const hasRole = userRoles?.some((r) => normalizeRole(r) === targetRole);
+        if (!hasRole) {
+          await addUserRole(user.id, targetRole);
+          if (refreshUserRoles) {
+            await refreshUserRoles(user.id);
+          }
+        }
+      } catch (e) {
+        console.warn('Auto-granting role in switcher:', e);
+      }
+    }
 
     if (targetRole === USER_ROLES.INSTITUTION) {
       navigate('/institution-dashboard');
@@ -152,7 +168,8 @@ export default function RoleSwitcher({ variant = 'light' }) {
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
-            width: '210px',
+            width: '215px',
+            maxWidth: 'calc(100vw - 1.5rem)',
             background: isDark ? '#0f172a' : '#FFFFFF',
             border: isDark ? '1px solid #334155' : '1px solid #E5E7EB',
             borderRadius: '12px',
@@ -160,6 +177,7 @@ export default function RoleSwitcher({ variant = 'light' }) {
             padding: '0.4rem',
             zIndex: 1000,
             animation: 'fadeIn 120ms ease-out',
+            boxSizing: 'border-box',
           }}
         >
           <div
@@ -177,7 +195,7 @@ export default function RoleSwitcher({ variant = 'light' }) {
             Switch Workspace Role
           </div>
 
-          {userRoles.map((r) => {
+          {ALL_SYSTEM_ROLES.map((r) => {
             const normalized = normalizeRole(r);
             const cfg = roleConfig[normalized];
             if (!cfg) return null;

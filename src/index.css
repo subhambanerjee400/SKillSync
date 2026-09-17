@@ -569,15 +569,141 @@ select {
   }
 }
 
+.institution-split-grid,
+.industry-split-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+}
+
 @media (max-width: 768px) {
   .institution-split-grid,
   .industry-split-grid {
     grid-template-columns: 1fr !important;
   }
+}
 
-  .institution-gap-row {
-    grid-template-columns: 1fr !important;
+/* Institution & Industry Headers */
+.institution-header,
+.industry-header {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .institution-header,
+  .industry-header {
+    padding: 0.75rem 1rem !important;
     gap: 0.5rem !important;
+  }
+  .institution-header-subtitle,
+  .industry-header-subtitle {
+    display: none !important;
+  }
+  .institution-signout-btn,
+  .industry-signout-btn {
+    padding: 0.35rem 0.55rem !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* Responsive Table Horizontal Scrolling */
+.table-scroll-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.table-scroll-hint {
+  display: none;
+  font-size: 0.72rem;
+  color: #64748B;
+  margin-top: 0.5rem;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .table-scroll-hint {
+    display: flex !important;
+  }
+}
+
+/* Aggregate Skill Gaps & Demand Index Rows */
+.institution-gap-row,
+.industry-demand-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) 2fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .institution-gap-row,
+  .industry-demand-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.45rem !important;
+    padding: 0.65rem 0 !important;
+    border-bottom: 1px solid #F1F5F9;
+  }
+
+  .institution-gap-row:last-child,
+  .industry-demand-row:last-child {
+    border-bottom: none;
+  }
+
+  .institution-gap-row > div:nth-child(2),
+  .industry-demand-row > div:nth-child(2) {
+    width: 100% !important;
+  }
+
+  .institution-gap-stat,
+  .industry-demand-stat {
+    font-size: 0.8rem !important;
+    align-self: flex-start !important;
+  }
+}
+
+/* Form 2-Column Responsive Layout */
+.institution-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .institution-form-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Learner Feedback Responsive Grid */
+.institution-feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 480px) {
+  .institution-feedback-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Dashboard Panel Mobile Spacing */
+@media (max-width: 480px) {
+  .dashboard-panel {
+    padding: 1rem !important;
+    border-radius: 12px !important;
   }
 }
 

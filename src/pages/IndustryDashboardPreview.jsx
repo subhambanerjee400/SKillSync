@@ -249,17 +249,19 @@ export default function IndustryDashboardPreview() {
 
       {/* Header */}
       <header
+        className="industry-header"
         style={{
           background: '#fff',
           borderBottom: '1px solid #e2e8f0',
-          padding: '1rem clamp(1rem, 4vw, 3rem)',
+          padding: '0.85rem clamp(0.75rem, 3vw, 2.5rem)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '1rem',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem' }}>
+        <div className="industry-header-branding" style={{ display: 'flex', alignItems: 'center', gap: '.65rem' }}>
           <span
             style={{
               width: 36,
@@ -268,32 +270,48 @@ export default function IndustryDashboardPreview() {
               display: 'grid',
               placeItems: 'center',
               background: '#581C87',
+              flexShrink: 0,
             }}
           >
             <Briefcase size={19} color="#fff" />
           </span>
-          <strong>SkillSync</strong>
-          <span style={{ color: '#64748b' }}>Industry Partner portal</span>
+          <strong style={{ fontSize: '1.05rem', color: '#0f172a' }}>SkillSync</strong>
+          <span className="industry-header-subtitle" style={{ color: '#64748b', fontSize: '0.85rem' }}>Industry Partner portal</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div className="industry-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
           <RoleSwitcher variant="light" />
           <button
             type="button"
             onClick={handleLogout}
+            className="industry-signout-btn"
             style={{
               color: '#475569',
               display: 'inline-flex',
-              gap: '.4rem',
+              gap: '0.35rem',
               alignItems: 'center',
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: '9999px',
+              padding: '0.35rem 0.65rem',
               cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 500,
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#DC2626';
+              e.currentTarget.style.borderColor = '#FECACA';
+              e.currentTarget.style.background = '#FEF2F2';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#475569';
+              e.currentTarget.style.borderColor = '#E2E8F0';
+              e.currentTarget.style.background = '#F8FAFC';
             }}
           >
-            <LogOut size={16} />
-            Sign out
+            <LogOut size={14} />
+            <span>Sign out</span>
           </button>
         </div>
       </header>
@@ -390,16 +408,10 @@ export default function IndustryDashboardPreview() {
 
         {/* Core Emerging Skills Demand Section */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.85fr)',
-            gap: '1.25rem',
-            marginBottom: '1.5rem',
-          }}
           className="industry-emerging-grid"
         >
           {/* Skills We're Currently Hiring For Table */}
-          <section style={panelStyle}>
+          <section style={panelStyle} className="dashboard-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -442,8 +454,8 @@ export default function IndustryDashboardPreview() {
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div className="table-scroll-wrapper">
+              <table style={{ width: '100%', minWidth: '480px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                     <th style={{ padding: '0.6rem 0.5rem' }}>Skill Name</th>
@@ -474,10 +486,13 @@ export default function IndustryDashboardPreview() {
                 </tbody>
               </table>
             </div>
+            <div className="table-scroll-hint">
+              <span>← Scroll horizontally to view all columns →</span>
+            </div>
           </section>
 
           {/* Report an Emerging Skill in Demand Form */}
-          <section style={panelStyle}>
+          <section style={panelStyle} className="dashboard-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <PlusCircle size={18} color="#581C87" />
@@ -531,7 +546,7 @@ export default function IndustryDashboardPreview() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="institution-form-row">
                 <div>
                   <label
                     htmlFor="ind-sector-select"
@@ -583,7 +598,7 @@ export default function IndustryDashboardPreview() {
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value="Rising">Rising (Accelerating Need)</option>
+                    <option value="Rising">Rising (Surge in Openings)</option>
                     <option value="Stable">Stable</option>
                     <option value="Declining">Declining</option>
                   </select>
@@ -595,7 +610,7 @@ export default function IndustryDashboardPreview() {
                   htmlFor="ind-openings-input"
                   style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}
                 >
-                  Estimated Annual Openings
+                  Estimated Immediate Openings
                 </label>
                 <input
                   id="ind-openings-input"
@@ -648,7 +663,7 @@ export default function IndustryDashboardPreview() {
         </div>
 
         {/* Top Rising Skills Chart Reframed Around Emerging Hiring Demand */}
-        <section style={{ ...panelStyle, marginBottom: '1.5rem' }}>
+        <section style={{ ...panelStyle, marginBottom: '1.5rem' }} className="dashboard-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
               <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -666,7 +681,7 @@ export default function IndustryDashboardPreview() {
 
           <div style={{ display: 'grid', gap: '1rem' }}>
             {DEMAND_CHART_DATA.map((item) => (
-              <div key={item.skill} style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 2fr auto', gap: '1rem', alignItems: 'center' }}>
+              <div key={item.skill} className="industry-demand-row">
                 <div>
                   <strong style={{ fontSize: '0.88rem', color: '#1E293B', display: 'block' }}>{item.skill}</strong>
                   <small style={{ color: '#64748B', fontSize: '0.76rem' }}>{item.category}</small>
@@ -682,7 +697,7 @@ export default function IndustryDashboardPreview() {
                     }}
                   />
                 </div>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#7E22CE', minWidth: '70px', textAlign: 'right' }}>
+                <span className="industry-demand-stat" style={{ fontWeight: 700, fontSize: '0.85rem', color: '#7E22CE', minWidth: '70px', textAlign: 'right' }}>
                   +{item.growth}% YoY
                 </span>
               </div>

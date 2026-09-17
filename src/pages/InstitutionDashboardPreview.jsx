@@ -226,17 +226,19 @@ export default function InstitutionDashboardPreview() {
 
       {/* Header */}
       <header
+        className="institution-header"
         style={{
           background: '#fff',
           borderBottom: '1px solid #e2e8f0',
-          padding: '1rem clamp(1rem, 4vw, 3rem)',
+          padding: '0.85rem clamp(0.75rem, 3vw, 2.5rem)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '1rem',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+        <div className="institution-header-branding" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <span
             style={{
               width: 36,
@@ -245,32 +247,48 @@ export default function InstitutionDashboardPreview() {
               display: 'grid',
               placeItems: 'center',
               background: '#0e4a32',
+              flexShrink: 0,
             }}
           >
             <Building2 size={19} color="#fff" />
           </span>
-          <strong>SkillSync</strong>
-          <span style={{ color: '#64748b' }}>Institution portal</span>
+          <strong style={{ fontSize: '1.05rem', color: '#0f172a' }}>SkillSync</strong>
+          <span className="institution-header-subtitle" style={{ color: '#64748b', fontSize: '0.85rem' }}>Institution portal</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div className="institution-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
           <RoleSwitcher variant="light" />
           <button
             type="button"
             onClick={handleLogout}
+            className="institution-signout-btn"
             style={{
               color: '#475569',
               display: 'inline-flex',
-              gap: '0.4rem',
+              gap: '0.35rem',
               alignItems: 'center',
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: '9999px',
+              padding: '0.35rem 0.65rem',
               cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 500,
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#DC2626';
+              e.currentTarget.style.borderColor = '#FECACA';
+              e.currentTarget.style.background = '#FEF2F2';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#475569';
+              e.currentTarget.style.borderColor = '#E2E8F0';
+              e.currentTarget.style.background = '#F8FAFC';
             }}
           >
-            <LogOut size={16} />
-            Sign out
+            <LogOut size={14} />
+            <span>Sign out</span>
           </button>
         </div>
       </header>
@@ -366,16 +384,10 @@ export default function InstitutionDashboardPreview() {
 
         {/* Emerging Skills Section (Core Theme) */}
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.85fr)',
-            gap: '1.25rem',
-            marginBottom: '1.5rem',
-          }}
           className="institution-emerging-grid"
         >
           {/* Emerging Skills You're Training For Table */}
-          <section style={panelStyle}>
+          <section style={panelStyle} className="dashboard-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -418,8 +430,8 @@ export default function InstitutionDashboardPreview() {
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div className="table-scroll-wrapper">
+              <table style={{ width: '100%', minWidth: '480px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                     <th style={{ padding: '0.6rem 0.5rem' }}>Skill Name</th>
@@ -450,10 +462,13 @@ export default function InstitutionDashboardPreview() {
                 </tbody>
               </table>
             </div>
+            <div className="table-scroll-hint">
+              <span>← Scroll horizontally to view all columns →</span>
+            </div>
           </section>
 
           {/* Report a New Emerging Skill Form */}
-          <section style={panelStyle}>
+          <section style={panelStyle} className="dashboard-panel">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <PlusCircle size={18} color="#0e4a32" />
@@ -507,7 +522,7 @@ export default function InstitutionDashboardPreview() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="institution-form-row">
                 <div>
                   <label
                     htmlFor="inst-trade-select"
@@ -625,19 +640,13 @@ export default function InstitutionDashboardPreview() {
         </div>
 
         {/* Existing Mock Curriculum & Candidate Data */}
-        <section style={{ ...panelStyle, marginBottom: '1.25rem' }}>
+        <section style={{ ...panelStyle, marginBottom: '1.25rem' }} className="dashboard-panel">
           <h2 style={{ fontSize: '1.05rem', marginTop: 0 }}>Aggregate Skill Gaps by Role</h2>
           <div style={{ display: 'grid', gap: '0.8rem' }}>
             {INSTITUTION_SKILL_GAPS.map((gap) => (
               <div
                 key={gap.skill}
                 className="institution-gap-row"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(160px, 1fr) 2fr auto',
-                  gap: '1rem',
-                  alignItems: 'center',
-                }}
               >
                 <span>
                   <strong>{gap.role}</strong>
@@ -646,7 +655,7 @@ export default function InstitutionDashboardPreview() {
                 <div style={{ height: 9, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden' }}>
                   <div style={{ width: `${gap.missingRate}%`, height: '100%', background: '#f59e0b' }} />
                 </div>
-                <span style={{ fontWeight: 700 }}>{gap.missingRate}% missing {gap.skill}</span>
+                <span className="institution-gap-stat" style={{ fontWeight: 700 }}>{gap.missingRate}% missing {gap.skill}</span>
               </div>
             ))}
           </div>
@@ -654,13 +663,8 @@ export default function InstitutionDashboardPreview() {
 
         <section
           className="institution-split-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.25fr) minmax(280px, 0.75fr)',
-            gap: '1rem',
-          }}
         >
-          <div style={panelStyle}>
+          <div style={panelStyle} className="dashboard-panel">
             <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
               <Users size={18} color="#0e4a32" /> Candidates Near You
             </h2>
@@ -691,7 +695,7 @@ export default function InstitutionDashboardPreview() {
             ))}
           </div>
 
-          <div style={panelStyle}>
+          <div style={panelStyle} className="dashboard-panel">
             <h2 style={{ fontSize: '1.05rem', marginTop: 0, display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
               <TrendingUp size={18} color="#0e4a32" /> Skill Trends
             </h2>
@@ -714,7 +718,7 @@ export default function InstitutionDashboardPreview() {
         </section>
 
         {/* Learner Feedback Demo Section */}
-        <section style={{ ...panelStyle, marginTop: '1.5rem' }}>
+        <section style={{ ...panelStyle, marginTop: '1.5rem' }} className="dashboard-panel">
           <div
             style={{
               display: 'flex',
@@ -761,11 +765,7 @@ export default function InstitutionDashboardPreview() {
           </div>
 
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
-              gap: '1rem',
-            }}
+            className="institution-feedback-grid"
           >
             {DEMO_LEARNER_FEEDBACK.map((fb) => (
               <div
