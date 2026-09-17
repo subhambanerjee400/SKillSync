@@ -133,8 +133,17 @@ export default function InstituteDashboard() {
           </span>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div
+          className="table-scroll-wrapper"
+          style={{
+            overflowX: 'auto',
+            maxWidth: '100%',
+            width: '100%',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
+          }}
+        >
+          <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 <th style={{ padding: '0.75rem 1rem' }}>Department</th>

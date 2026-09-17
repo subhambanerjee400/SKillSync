@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { USER_ROLES, normalizeRole, addUserRole } from '../lib/userRoles';
@@ -15,19 +15,83 @@ export default function RoleSwitcher({ variant = 'light' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 16, width: 225 });
   const dropdownRef = useRef(null);
+  const menuRef = useRef(null);
 
-  // Close dropdown on outside click
+  // Position clamping middleware (Shift & Flip) to guarantee menu never renders outside the viewport
+  const updatePosition = useCallback(() => {
+    if (!dropdownRef.current) return;
+    const triggerRect = dropdownRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 16; // 16px safety margin from viewport edges
+    const defaultWidth = 225;
+    const maxAvailableWidth = viewportWidth - padding * 2;
+    const menuWidth = Math.min(defaultWidth, maxAvailableWidth);
+
+    // Default intent: align right edge of dropdown with right edge of trigger button
+    let left = triggerRect.right - menuWidth;
+
+    // Shift clamping: clamp so left NEVER goes below padding (never negative / never off-screen left)
+    if (left < padding) {
+      left = padding;
+    }
+    // Shift clamping: clamp so right edge never exceeds viewportWidth - padding
+    if (left + menuWidth > viewportWidth - padding) {
+      left = Math.max(padding, viewportWidth - padding - menuWidth);
+    }
+
+    // Vertical positioning & flip
+    let top = triggerRect.bottom + 8;
+    const estimatedHeight = 220;
+    if (top + estimatedHeight > viewportHeight - padding && triggerRect.top > estimatedHeight + padding) {
+      top = triggerRect.top - estimatedHeight - 8;
+    }
+
+    setDropdownPos({
+      top,
+      left,
+      width: menuWidth,
+    });
+  }, []);
+
+  // Update position on open, window resize, scroll, and outside click
   useEffect(() => {
     if (!isOpen) return;
+    updatePosition();
+
+    const handleResize = () => updatePosition();
+    const handleScroll = () => updatePosition();
+
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target) &&
+        (!menuRef.current || !menuRef.current.contains(e.target))
+      ) {
         setIsOpen(false);
       }
     };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, true);
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll, true);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, updatePosition]);
 
   // Determine current effective role
   const isInstitutionPage = location.pathname.includes('/institution');
@@ -106,7 +170,12 @@ export default function RoleSwitcher({ variant = 'light' }) {
       {/* Switcher Button */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (!isOpen) {
+            updatePosition();
+          }
+          setIsOpen((prev) => !prev);
+        }}
         aria-label="Switch account workspace role"
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -160,22 +229,23 @@ export default function RoleSwitcher({ variant = 'light' }) {
         />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu - Guaranteed In-Viewport via Shift/Flip Position Clamping */}
       {isOpen && (
         <div
+          ref={menuRef}
           role="menu"
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            width: '215px',
-            maxWidth: 'calc(100vw - 1.5rem)',
+            position: 'fixed',
+            top: `${dropdownPos.top}px`,
+            left: `${dropdownPos.left}px`,
+            width: `${dropdownPos.width}px`,
+            maxWidth: 'calc(100vw - 32px)',
             background: isDark ? '#0f172a' : '#FFFFFF',
             border: isDark ? '1px solid #334155' : '1px solid #E5E7EB',
             borderRadius: '12px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
             padding: '0.4rem',
-            zIndex: 1000,
+            zIndex: 9999,
             animation: 'fadeIn 120ms ease-out',
             boxSizing: 'border-box',
           }}

@@ -202,7 +202,7 @@ export default function IndustryDashboardPreview() {
   const totalOpeningsCount = hiringSkills.reduce((acc, curr) => acc + curr.openings, 0);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       {/* Success Toast */}
       {toastMessage && (
         <div
@@ -316,7 +316,7 @@ export default function IndustryDashboardPreview() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1140, margin: '0 auto', padding: '2rem clamp(1rem, 4vw, 2.5rem)' }}>
+      <main style={{ maxWidth: 1140, width: '100%', margin: '0 auto', padding: '2rem clamp(1rem, 4vw, 2.5rem)', boxSizing: 'border-box' }}>
         {/* Mandatory Notice Banner */}
         <div
           style={{
@@ -454,14 +454,31 @@ export default function IndustryDashboardPreview() {
               </div>
             </div>
 
-            <div className="table-scroll-wrapper">
-              <table style={{ width: '100%', minWidth: '480px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <div
+              className="table-scroll-wrapper"
+              style={{
+                overflowX: 'auto',
+                maxWidth: '100%',
+                width: '100%',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehaviorX: 'contain',
+              }}
+            >
+              <table
+                style={{
+                  width: '100%',
+                  minWidth: '600px',
+                  borderCollapse: 'collapse',
+                  textAlign: 'left',
+                  fontSize: '0.85rem',
+                }}
+              >
                 <thead>
                   <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '0.6rem 0.5rem' }}>Skill Name</th>
-                    <th style={{ padding: '0.6rem 0.5rem' }}>Sector</th>
-                    <th style={{ padding: '0.6rem 0.5rem' }}>Trend</th>
-                    <th style={{ padding: '0.6rem 0.5rem', textAlign: 'right' }}>Openings</th>
+                    <th style={{ padding: '0.6rem 0.5rem', minWidth: '180px' }}>Skill Name</th>
+                    <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px' }}>Sector</th>
+                    <th style={{ padding: '0.6rem 0.5rem', minWidth: '130px' }}>Trend</th>
+                    <th style={{ padding: '0.6rem 0.5rem', minWidth: '80px', textAlign: 'right' }}>Openings</th>
                   </tr>
                 </thead>
                 <tbody>
