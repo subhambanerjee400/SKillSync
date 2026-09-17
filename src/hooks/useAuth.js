@@ -455,6 +455,26 @@ export function AuthProvider({ children }) {
       if (authError) {
         if (authError.message?.toLowerCase().includes('api key') || authError.status === 401) {
           console.warn('Supabase returned API key error. Using development signup:', authError.message);
+
+          // In development fallback mode: if this email already exists and has roles, simulate Supabase "User already registered" error
+          try {
+            const regStr = localStorage.getItem('skillsync_user_registry');
+            const registry = regStr ? JSON.parse(regStr) : {};
+            if (registry[cleanEmail]) {
+              const existingId = registry[cleanEmail];
+              const rolesStr = localStorage.getItem(`skillsync_user_roles_${existingId}`);
+              const existingRoles = rolesStr ? JSON.parse(rolesStr) : [];
+              if (existingRoles.length > 0) {
+                const dupError = new Error('User already registered');
+                dupError.code = 'user_already_exists';
+                dupError.status = 400;
+                throw dupError;
+              }
+            }
+          } catch (dupErr) {
+            if (dupErr.message === 'User already registered') throw dupErr;
+          }
+
           const userId = getOrCreateFallbackUserId(cleanEmail);
           saveAccountRoleLocally(userId, chosenRole);
           const fallbackUser = {

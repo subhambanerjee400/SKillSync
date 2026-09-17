@@ -67,7 +67,7 @@ export default function Signup() {
   }, [user, navigate]);
 
   const roleLabel = (role) => {
-    return role === USER_ROLES.INSTITUTION ? 'Institution' : 'Job Seeker';
+    return normalizeRole(role) === USER_ROLES.INSTITUTION ? 'Training Institution' : 'Job Seeker';
   };
 
   const handleSubmit = async (e) => {
@@ -128,7 +128,7 @@ export default function Signup() {
 
       setIsSubmitting(false);
       setReassuranceMsg(
-        `An account with this email already exists. Log in and we'll add the ${targetLabel} role to your existing account.`
+        `An account with this email already exists. Log in and we'll add the ${targetLabel} role to your account.`
       );
       return;
     }
@@ -148,14 +148,21 @@ export default function Signup() {
       }, 1000);
     } catch (err) {
       console.error('[Signup] Error:', err);
-      const msg = err.message || '';
+      const rawMsg = err?.message || err?.error_description || err?.msg || err?.error || String(err || '');
+      const errorCode = err?.code || '';
 
       // Check if Supabase detected an existing user during signup
-      if (
-        msg.toLowerCase().includes('already registered') ||
-        msg.toLowerCase().includes('already in use') ||
-        msg.toLowerCase().includes('user already exists')
-      ) {
+      const isAlreadyRegistered =
+        errorCode === 'user_already_exists' ||
+        rawMsg.toLowerCase().includes('already registered') ||
+        rawMsg.toLowerCase().includes('already in use') ||
+        rawMsg.toLowerCase().includes('user already exists') ||
+        rawMsg.toLowerCase().includes('email exists');
+
+      if (isAlreadyRegistered) {
+        // Absolutely clear any raw error message
+        setErrorMsg('');
+
         const targetLabel = roleLabel(accountRole);
         savePendingRole({
           role: accountRole,
@@ -166,10 +173,10 @@ export default function Signup() {
         });
 
         setReassuranceMsg(
-          `An account with this email already exists. Log in and we'll add the ${targetLabel} role to your existing account.`
+          `An account with this email already exists. Log in and we'll add the ${targetLabel} role to your account.`
         );
       } else {
-        setErrorMsg(msg || t('auth.errSignupFailed') || 'Registration failed');
+        setErrorMsg(rawMsg || t('auth.errSignupFailed') || 'Registration failed');
       }
       setIsSubmitting(false);
     }
@@ -214,22 +221,24 @@ export default function Signup() {
               </span>
             </div>
             <Link
+              id="reassurance-login-link"
               to={`/login?pending_role=${accountRole}&email=${encodeURIComponent(email.trim())}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                fontSize: '0.83rem',
+                fontSize: '0.84rem',
                 fontWeight: 700,
                 color: '#15803D',
                 textDecoration: 'none',
                 alignSelf: 'flex-end',
-                padding: '0.35rem 0.75rem',
+                padding: '0.4rem 0.8rem',
                 background: '#DCFCE7',
+                border: '1px solid #BBF7D0',
                 borderRadius: '6px',
               }}
             >
-              <span>Log in to add {roleLabel(accountRole)}</span>
+              <span>Log in to add {roleLabel(accountRole)} role</span>
               <ArrowRight size={14} />
             </Link>
           </motion.div>

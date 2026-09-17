@@ -18,7 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles (user_id)
 -- 2. Enable Row Level Security (RLS)
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
--- 3. RLS Policies: Authenticated users can select and insert only their own roles
+-- 3. RLS Policies: Authenticated users can select, insert, and update their own roles
 DROP POLICY IF EXISTS "Users can select own roles" ON public.user_roles;
 CREATE POLICY "Users can select own roles"
     ON public.user_roles
@@ -33,8 +33,37 @@ CREATE POLICY "Users can insert own roles"
     TO authenticated
     WITH CHECK (auth.uid() = user_id);
 
--- 4. One-time Migration: Copy existing accounts / profiles into user_roles
--- Migrate from public.accounts if present ('user' -> 'job_seeker', 'institution' -> 'institution')
+DROP POLICY IF EXISTS "Users can update own roles" ON public.user_roles;
+CREATE POLICY "Users can update own roles"
+    ON public.user_roles
+    FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- 4. Trigger to automatically assign default role upon signup
+CREATE OR REPLACE FUNCTION public.handle_new_user_roles()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (
+    NEW.id,
+    CASE NEW.raw_user_meta_data->>'account_role'
+      WHEN 'institution' THEN 'institution'
+      ELSE 'job_seeker'
+    END
+  )
+  ON CONFLICT (user_id, role) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_roles ON auth.users;
+CREATE TRIGGER on_auth_user_created_roles
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_roles();
+
+-- 5. One-time Migration: Copy existing accounts / profiles / auth.users into user_roles
 INSERT INTO public.user_roles (user_id, role)
 SELECT 
     user_id, 
@@ -45,13 +74,11 @@ SELECT
 FROM public.accounts
 ON CONFLICT (user_id, role) DO NOTHING;
 
--- Migrate from public.profiles if any user has a profile but was not in accounts
 INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'job_seeker'
 FROM public.profiles
 ON CONFLICT (user_id, role) DO NOTHING;
 
--- Backfill any remaining auth.users as default job_seeker
 INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'job_seeker'
 FROM auth.users

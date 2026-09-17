@@ -7,28 +7,44 @@ export const USER_ROLES = {
 
 // Safe storage wrapper for browser storage or in-memory fallback
 const inMemoryCache = new Map();
-const safeStorage = {
+
+const getGlobalStorage = () => {
+  if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+  if (typeof globalThis !== 'undefined' && globalThis.localStorage) return globalThis.localStorage;
+  return null;
+};
+
+const getGlobalSessionStorage = () => {
+  if (typeof window !== 'undefined' && window.sessionStorage) return window.sessionStorage;
+  if (typeof globalThis !== 'undefined' && globalThis.sessionStorage) return globalThis.sessionStorage;
+  return null;
+};
+
+export const safeStorage = {
   getItem(key) {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    const storage = getGlobalStorage();
+    if (storage) {
       try {
-        return window.localStorage.getItem(key);
+        return storage.getItem(key);
       } catch (e) { }
     }
     return inMemoryCache.get(key) || null;
   },
   setItem(key, val) {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    const storage = getGlobalStorage();
+    if (storage) {
       try {
-        window.localStorage.setItem(key, val);
+        storage.setItem(key, val);
         return;
       } catch (e) { }
     }
     inMemoryCache.set(key, val);
   },
   removeItem(key) {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    const storage = getGlobalStorage();
+    if (storage) {
       try {
-        window.localStorage.removeItem(key);
+        storage.removeItem(key);
         return;
       } catch (e) { }
     }
@@ -36,28 +52,31 @@ const safeStorage = {
   },
 };
 
-const safeSessionStorage = {
+export const safeSessionStorage = {
   getItem(key) {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
+    const storage = getGlobalSessionStorage();
+    if (storage) {
       try {
-        return window.sessionStorage.getItem(key);
+        return storage.getItem(key);
       } catch (e) { }
     }
     return inMemoryCache.get(`session_${key}`) || null;
   },
   setItem(key, val) {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
+    const storage = getGlobalSessionStorage();
+    if (storage) {
       try {
-        window.sessionStorage.setItem(key, val);
+        storage.setItem(key, val);
         return;
       } catch (e) { }
     }
     inMemoryCache.set(`session_${key}`, val);
   },
   removeItem(key) {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
+    const storage = getGlobalSessionStorage();
+    if (storage) {
       try {
-        window.sessionStorage.removeItem(key);
+        storage.removeItem(key);
         return;
       } catch (e) { }
     }

@@ -53,7 +53,12 @@ export default function Login() {
 
     if (roleParam) {
       const normalized = normalizeRole(roleParam);
-      const roleLabel = normalized === USER_ROLES.INSTITUTION ? 'Institution' : 'Job Seeker';
+      const roleLabel = normalized === USER_ROLES.INSTITUTION ? 'Training Institution' : 'Job Seeker';
+      // Ensure pending role is kept in session storage
+      savePendingRole({
+        role: normalized,
+        email: emailParam || (pending ? pending.email : ''),
+      });
       setPendingRoleBanner(`Log in with your existing credentials to add the ${roleLabel} role to your account.`);
     } else if (params.get('registered') === 'true') {
       setInfoMsg(t('auth.accountCreatedLoginMsg') || 'Registration successful! Please sign in.');
@@ -65,6 +70,13 @@ export default function Login() {
     if (!targetUser?.id) {
       navigate('/onboarding', { replace: true });
       return;
+    }
+
+    // Process any pending role insertion
+    const pending = getPendingRole();
+    if (pending?.role) {
+      await addUserRole(targetUser.id, pending.role, pending);
+      clearPendingRole();
     }
 
     const roles = await getUserRoles(targetUser.id);
