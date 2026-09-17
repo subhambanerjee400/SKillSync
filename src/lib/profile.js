@@ -37,12 +37,14 @@ export async function getUserProfile(userId) {
       .eq('id', userId)
       .maybeSingle();
 
-    if (data && data.id) {
+    if (error) {
+      console.warn('Supabase profile fetch error:', error.message || error);
+    } else if (data && data.id) {
       safeStorage.setItem(`skillsync_profile_${userId}`, JSON.stringify(data));
       return data;
     }
   } catch (err) {
-    console.warn('Supabase profile fetch error:', err);
+    console.warn('Supabase profile network/timeout error:', err.message || err);
   }
 
   // Fallback to local cache for dev/offline resilience
@@ -74,11 +76,13 @@ export async function getUserSkills(userId) {
       .select('skill_name')
       .eq('user_id', userId);
 
-    if (data && data.length > 0) {
+    if (error) {
+      console.warn('Supabase user_skills fetch error:', error.message || error);
+    } else if (data && data.length > 0) {
       return data.map((row) => row.skill_name);
     }
   } catch (err) {
-    console.warn('Supabase user_skills fetch error:', err);
+    console.warn('Supabase user_skills network/timeout error:', err.message || err);
   }
 
   const cached = safeStorage.getItem(`skillsync_skills_${userId}`);

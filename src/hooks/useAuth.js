@@ -149,18 +149,18 @@ export function AuthProvider({ children }) {
       setProfile(null);
       return null;
     }
-    setProfileLoading(true);
     try {
       const p = await getUserProfile(uid);
       if (p) {
-        setProfile(p);
+        setProfile((prev) => {
+          if (prev && JSON.stringify(prev) === JSON.stringify(p)) return prev;
+          return p;
+        });
       }
       return p;
     } catch (err) {
       console.warn('refreshProfile error:', err);
       return null;
-    } finally {
-      setProfileLoading(false);
     }
   }, [user?.id]);
 
@@ -173,7 +173,10 @@ export function AuthProvider({ children }) {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && (parsed.id === user.id || parsed.name)) {
-            setProfile((curr) => curr || parsed);
+            setProfile((curr) => {
+              if (curr && JSON.stringify(curr) === JSON.stringify(parsed)) return curr;
+              return parsed;
+            });
           }
         }
       } catch (e) {}
@@ -260,7 +263,7 @@ export function AuthProvider({ children }) {
     return getAvatarUrl(rawAvatar, userName);
   }, [profile?.avatar_url, user, userName]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     setError(null);
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -336,9 +339,9 @@ export function AuthProvider({ children }) {
       setError(err.message);
       throw err;
     }
-  };
+  }, []);
 
-  const signup = async (email, password, metadata = {}) => {
+  const signup = useCallback(async (email, password, metadata = {}) => {
     setError(null);
     const chosenRole = metadata.account_role || metadata.accountRole || 'user';
     saveAccountRoleLocally(email.trim().toLowerCase(), chosenRole);
@@ -404,9 +407,9 @@ export function AuthProvider({ children }) {
       setError(err.message);
       throw err;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
@@ -418,13 +421,13 @@ export function AuthProvider({ children }) {
       setRole('student');
       localStorage.removeItem('skillsync_user');
     }
-  };
+  }, []);
 
-  const switchRole = (newRole) => {
+  const switchRole = useCallback((newRole) => {
     setRole(newRole);
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     session,
     role,
@@ -441,7 +444,23 @@ export function AuthProvider({ children }) {
     refreshProfile,
     updateProfile,
     setProfile,
-  };
+  }), [
+    user,
+    session,
+    role,
+    profile,
+    profileLoading,
+    userName,
+    userAvatar,
+    loading,
+    error,
+    login,
+    signup,
+    logout,
+    switchRole,
+    refreshProfile,
+    updateProfile,
+  ]);
 
   return React.createElement(
     AuthContext.Provider,

@@ -172,13 +172,13 @@ export function calculateScore(userSkills = [], requiredSkills = []) {
  *   decliningOrLegacyMissing: string[]
  * }>}
  */
-export async function getUserSkillGapAnalysis(userId) {
+export async function getUserSkillGapAnalysis(userId, existingProfile = null) {
   if (!userId) {
     throw new Error('getUserSkillGapAnalysis requires a valid userId');
   }
 
   // 1. Fetch user profile (to get target role and segment)
-  const profile = await getUserProfile(userId);
+  const profile = existingProfile || (await getUserProfile(userId));
   const targetRole = profile?.role || 'Frontend Developer';
   const segment = profile?.segment || 'Software';
 

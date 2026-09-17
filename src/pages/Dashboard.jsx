@@ -5,7 +5,8 @@ import { getSkillLabel } from '../i18n/skillLabels';
 import { getAvatarUrl } from '../data/avatars';
 import { useAuth } from '../hooks/useAuth';
 import { getUserProfile } from '../lib/profile';
-import { getUserSkillGapAnalysis, saveScoreIfChanged } from '../lib/scoring';
+import { getUserSkillGapAnalysis, saveScoreIfChanged, calculateScore } from '../lib/scoring';
+import { getRequiredSkillsForRole } from '../data/demoData';
 import {
   generateCourseRecommendations,
   generateTradeRecommendations,
@@ -19,22 +20,37 @@ import RecommendationPanel from '../components/RecommendationPanel';
 import SkillDetailModal from '../components/SkillDetailModal';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { generateRoadmap } from '../lib/roadmap';
-import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu } from 'lucide-react';
+import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, logout, profile: sharedProfile, userName, userAvatar, refreshProfile } = useAuth();
+  const { user, logout, profile: sharedProfile, userName, userAvatar } = useAuth();
   const [profile, setProfile] = useState(sharedProfile);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [recNotice, setRecNotice] = useState(null);
   const [activeSkillModal, setActiveSkillModal] = useState(null); // 'matched' | 'missing' | null
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [activeHeaderPopover, setActiveHeaderPopover] = useState(null); // 'mail' | 'notifications' | null
 
-  const effectiveProfile = profile || sharedProfile;
+  // Dismiss header popovers on outside click
+  useEffect(() => {
+    if (!activeHeaderPopover) return;
+    const handleDocumentClick = (e) => {
+      if (!e.target.closest('.header-popover-container')) {
+        setActiveHeaderPopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [activeHeaderPopover]);
+
+  const effectiveProfile = sharedProfile || profile;
 
   const roadmapSteps = useMemo(() => {
     if (!analysis) return [];
@@ -45,52 +61,149 @@ export default function Dashboard() {
     );
   }, [analysis]);
 
-  // Fetch profile, calculate live score, and generate recommendations
+  // Fetch profile, calculate live score, and generate recommendations with timeout protection
   useEffect(() => {
-    if (!user?.id) return;
+    const userId = user?.id;
+    if (!userId) {
+      if (user === null) {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     let isMounted = true;
+
+    // Helper to enforce hard timeout on async operations
+    const withTimeout = (promise, ms = 8000, errorMsg = 'Request timed out') => {
+      let timer;
+      const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(errorMsg)), ms);
+      });
+      return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+    };
 
     async function loadDashboardData() {
       setIsLoading(true);
+      setLoadError(null);
+
       try {
-        const p = await refreshProfile(user.id);
+        // 1. Resolve user profile: check shared context first, then localStorage, then direct fetch
+        let activeProf = sharedProfile;
+        if (!activeProf) {
+          try {
+            const cached = localStorage.getItem(`skillsync_profile_${userId}`);
+            if (cached) activeProf = JSON.parse(cached);
+          } catch (e) {}
+        }
+
+        if (!activeProf) {
+          try {
+            activeProf = await withTimeout(
+              getUserProfile(userId),
+              6000,
+              'Profile request timed out after 6s'
+            );
+          } catch (profileErr) {
+            console.warn('Direct profile fetch warning:', profileErr.message);
+          }
+        }
+
         if (!isMounted) return;
 
-        const activeProf = p || sharedProfile;
         if (!activeProf) {
+          setIsLoading(false);
           navigate('/onboarding', { replace: true });
           return;
         }
 
         setProfile(activeProf);
 
-        // Fetch deterministic skill gap analysis
-        const result = await getUserSkillGapAnalysis(user.id);
+        // 2. Fetch deterministic skill gap analysis with timeout protection, passing activeProf
+        let result = null;
+        try {
+          result = await withTimeout(
+            getUserSkillGapAnalysis(userId, activeProf),
+            8000,
+            'Skill gap analysis request timed out after 8s'
+          );
+        } catch (analysisErr) {
+          console.warn('Skill gap analysis live fetch error (falling back to cached calculation):', analysisErr.message);
+
+          // Graceful degradation: compute score locally from cached skills
+          const cachedSkills = (() => {
+            try {
+              const str = localStorage.getItem(`skillsync_skills_${userId}`);
+              return str ? JSON.parse(str) : [];
+            } catch (e) {
+              return [];
+            }
+          })();
+
+          const targetRole = activeProf.role || 'Frontend Developer';
+          const required = getRequiredSkillsForRole(targetRole);
+          const scoringResult = calculateScore(cachedSkills, required);
+
+          result = {
+            profile: activeProf,
+            role: targetRole,
+            segment: activeProf.segment || 'Software',
+            userSkills: cachedSkills,
+            requiredSkills: required,
+            ...scoringResult,
+          };
+
+          setLoadError(
+            analysisErr.message?.toLowerCase().includes('timed out')
+              ? t('dashboard.timeoutNotice', {
+                  defaultValue: 'Live database connection timed out after 8s. Showing cached offline data.',
+                })
+              : t('dashboard.offlineNotice', {
+                  defaultValue: 'Database connection issue. Showing cached offline data.',
+                })
+          );
+        }
+
         if (!isMounted) return;
 
-        setAnalysis(result);
+        if (result) {
+          setAnalysis(result);
 
-        // Save score to history if changed (non-blocking)
-        saveScoreIfChanged(user.id, result.score).catch((err) =>
-          console.warn('Score history save error:', err)
-        );
-
-        // Generate tailored recommendations based on segment
-        if (activeProf.segment === 'Trade') {
-          const tradeResult = generateTradeRecommendations(result.missingSkills, activeProf);
-          setRecommendations(tradeResult.recommendations || []);
-          setRecNotice(tradeResult.notice || null);
-        } else {
-          const courseResult = generateCourseRecommendations(
-            result.missingSkills,
-            result.risingMissing,
-            activeProf.role
+          // Save score to history if changed (non-blocking)
+          saveScoreIfChanged(userId, result.score).catch((err) =>
+            console.warn('Score history save error:', err)
           );
-          setRecommendations(courseResult || []);
-          setRecNotice(null);
+
+          // Generate tailored recommendations based on segment
+          if (activeProf.segment === 'Trade') {
+            const tradeResult = generateTradeRecommendations(result.missingSkills, activeProf);
+            setRecommendations(tradeResult.recommendations || []);
+            setRecNotice(tradeResult.notice || null);
+          } else {
+            const courseResult = generateCourseRecommendations(
+              result.missingSkills,
+              result.risingMissing,
+              activeProf.role
+            );
+            setRecommendations(courseResult || []);
+            setRecNotice(null);
+          }
+        } else {
+          setLoadError(
+            t('dashboard.failedToAnalyze', {
+              defaultValue: 'Unable to load skill readiness analysis. Please check connection and try again.',
+            })
+          );
         }
       } catch (err) {
         console.error('Dashboard data load error:', err);
+        if (isMounted) {
+          setLoadError(
+            err.message ||
+              t('dashboard.genericError', {
+                defaultValue: 'Failed to load readiness data. Connection timed out or server unavailable.',
+              })
+          );
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -103,7 +216,7 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, [user, navigate, refreshProfile, sharedProfile]);
+  }, [user?.id, retryCount]);
 
   const handleLogout = async () => {
     try {
@@ -151,6 +264,91 @@ export default function Dashboard() {
           <p style={{ fontSize: '0.825rem', color: '#6B7280', margin: '4px 0 0 0' }}>
             {t('dashboard.loadingSubtitle')}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dedicated Error Screen if loading failed completely and no analysis could be computed
+  if (!isLoading && loadError && !analysis) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          background: '#F4F6F8',
+          padding: '1.5rem',
+          gap: '1.25rem',
+          fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: '#FEE2E2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px -4px rgba(239, 68, 68, 0.25)',
+          }}
+        >
+          <AlertTriangle size={30} color="#DC2626" />
+        </div>
+        <div style={{ textAlign: 'center', maxWidth: '440px' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: '0 0 0.5rem 0' }}>
+            {t('dashboard.connectionErrorTitle', { defaultValue: 'Connection Timeout' })}
+          </h3>
+          <p style={{ fontSize: '0.9rem', color: '#6B7280', margin: 0, lineHeight: 1.5 }}>
+            {loadError}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={() => setRetryCount((c) => c + 1)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.625rem 1.25rem',
+              borderRadius: '10px',
+              border: 'none',
+              background: '#0E4A32',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(14, 74, 50, 0.25)',
+            }}
+          >
+            <RefreshCw size={16} />
+            {t('common.retry', { defaultValue: 'Retry Connection' })}
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.625rem 1.25rem',
+              borderRadius: '10px',
+              border: '1px solid #D1D5DB',
+              background: '#FFFFFF',
+              color: '#374151',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+            }}
+          >
+            <LogOut size={16} />
+            {t('common.logout', { defaultValue: 'Sign Out' })}
+          </button>
         </div>
       </div>
     );
@@ -365,65 +563,160 @@ export default function Dashboard() {
             {/* Language Switcher */}
             <LanguageSwitcher variant="light" compact />
 
-            {/* Mail Icon Button (hidden on narrow screens) */}
-            <button
-              type="button"
-              aria-label="Messages"
-              className="hide-mobile"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#4B5563',
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
-            >
-              <Mail size={18} />
-            </button>
-
-            {/* Notification Bell with Badge */}
-            <button
-              type="button"
-              aria-label="Notifications"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#4B5563',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
-            >
-              <Bell size={18} />
-              <span
+            {/* Mail Icon Button & Dropdown */}
+            <div className="header-popover-container hide-mobile" style={{ position: 'relative' }}>
+              <button
+                type="button"
+                aria-label="Messages"
+                title="Messages coming soon"
+                onClick={() => setActiveHeaderPopover((prev) => (prev === 'mail' ? null : 'mail'))}
                 style={{
-                  position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  width: '7px',
-                  height: '7px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
-                  background: '#10B981',
+                  background: activeHeaderPopover === 'mail' ? '#F3F4F6' : '#FFFFFF',
+                  border: activeHeaderPopover === 'mail' ? '1px solid #10B981' : '1px solid #E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: activeHeaderPopover === 'mail' ? '#10B981' : '#4B5563',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
                 }}
-              />
-            </button>
+                onMouseEnter={(e) => {
+                  if (activeHeaderPopover !== 'mail') e.currentTarget.style.background = '#F9FAFB';
+                }}
+                onMouseLeave={(e) => {
+                  if (activeHeaderPopover !== 'mail') e.currentTarget.style.background = '#FFFFFF';
+                }}
+              >
+                <Mail size={18} />
+              </button>
+
+              {activeHeaderPopover === 'mail' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '230px',
+                    background: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '12px',
+                    padding: '0.875rem 1rem',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    zIndex: 50,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '6px',
+                        background: '#ECFDF5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#059669',
+                      }}
+                    >
+                      <Mail size={13} />
+                    </div>
+                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: '#111827' }}>
+                      Messages
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#6B7280', lineHeight: 1.4 }}>
+                    Mail and direct messaging are coming soon.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Notification Bell & Dropdown */}
+            <div className="header-popover-container" style={{ position: 'relative' }}>
+              <button
+                type="button"
+                aria-label="Notifications"
+                title="Notifications coming soon"
+                onClick={() => setActiveHeaderPopover((prev) => (prev === 'notifications' ? null : 'notifications'))}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: activeHeaderPopover === 'notifications' ? '#F3F4F6' : '#FFFFFF',
+                  border: activeHeaderPopover === 'notifications' ? '1px solid #10B981' : '1px solid #E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: activeHeaderPopover === 'notifications' ? '#10B981' : '#4B5563',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (activeHeaderPopover !== 'notifications') e.currentTarget.style.background = '#F9FAFB';
+                }}
+                onMouseLeave={(e) => {
+                  if (activeHeaderPopover !== 'notifications') e.currentTarget.style.background = '#FFFFFF';
+                }}
+              >
+                <Bell size={18} />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    background: '#10B981',
+                  }}
+                />
+              </button>
+
+              {activeHeaderPopover === 'notifications' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '240px',
+                    background: '#FFFFFF',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '12px',
+                    padding: '0.875rem 1rem',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    zIndex: 50,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <div
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '6px',
+                        background: '#ECFDF5',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#059669',
+                      }}
+                    >
+                      <Bell size={13} />
+                    </div>
+                    <span style={{ fontSize: '0.825rem', fontWeight: 600, color: '#111827' }}>
+                      Notifications
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#6B7280', lineHeight: 1.4 }}>
+                    Notifications coming soon.
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* User Profile Pill */}
             <div
@@ -515,6 +808,50 @@ export default function Dashboard() {
             margin: '0 auto',
           }}
         >
+          {/* Offline / Timeout Notice Banner if analysis loaded from cached fallback */}
+          {loadError && analysis && (
+            <div
+              style={{
+                padding: '0.85rem 1.25rem',
+                borderRadius: '12px',
+                background: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                color: '#92400E',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertTriangle size={18} color="#D97706" style={{ flexShrink: 0 }} />
+                <span>{loadError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRetryCount((c) => c + 1)}
+                style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '8px',
+                  border: '1px solid #D97706',
+                  background: '#FFFFFF',
+                  color: '#92400E',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+              >
+                <RefreshCw size={14} />
+                {t('common.retry', { defaultValue: 'Retry' })}
+              </button>
+            </div>
+          )}
+
           {/* Dashboard Title & Welcome Section (Donezo header style) */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
