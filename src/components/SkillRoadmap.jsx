@@ -69,7 +69,7 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                   border: '1px solid #DCFCE7',
                 }}
               >
-                {role} {t('roadmap.pathBadge')}
+                {t('roadmap.pathBadge', { role })}
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '2px 0 0 0' }}>
@@ -280,9 +280,9 @@ export default function SkillRoadmap({ role = 'Role', steps = [] }) {
                     color: isNext ? '#065F46' : isDone ? '#0E4A32' : '#6B7280',
                     flexShrink: 0,
                   }}
-                  title={`Critical demand weight: ${step.weight}/10`}
+                  title={t('roadmap.criticalWeight', { weight: step.weight })}
                 >
-                  {t('roadmap.weight')}: {step.weight}
+                  {t('roadmap.weight', { weight: step.weight })}
                 </span>
               </div>
 

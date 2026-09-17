@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { LayoutDashboard, User, LogOut, Sparkles, ArrowRight, ShieldCheck, X } from 'lucide-react';
-import LanguageSwitcher from './LanguageSwitcher';
+
 
 export default function Sidebar({
   onLogout,
@@ -260,24 +260,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* Section: LANGUAGE */}
-        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-          <span
-            style={{
-              display: 'block',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              color: '#9CA3AF',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              paddingLeft: '0.75rem',
-              marginBottom: '0.5rem',
-            }}
-          >
-            {t('nav.language')}
-          </span>
-          <LanguageSwitcher variant="light" />
-        </div>
+
       </div>
 
       {/* Bottom Promo Card (Donezo style) */}

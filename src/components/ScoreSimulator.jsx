@@ -273,7 +273,7 @@ export default function ScoreSimulator({
               }}
             >
               <TrendingUp size={14} color="#34D399" />
-              <span>+{delta}% {t('simulator.potentialIncrease')}</span>
+              <span>{t('simulator.potentialIncrease', { delta })}</span>
             </div>
           ) : (
             <span style={{ fontSize: '0.78rem', color: '#9CA3AF', fontStyle: 'italic' }}>
@@ -287,7 +287,7 @@ export default function ScoreSimulator({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#374151' }}>
-            {t('simulator.toggleHeader', { selected: simulatedSkills.size, total: missingSkills.length })}
+            {t('simulator.toggleHeader', { count: simulatedSkills.size, total: missingSkills.length })}
           </span>
         </div>
 
