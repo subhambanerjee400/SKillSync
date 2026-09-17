@@ -15,6 +15,8 @@ import {
   Search,
   Mail,
   Building,
+  Star,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import RoleSwitcher from '../components/RoleSwitcher';
@@ -43,6 +45,48 @@ const DEMAND_CHART_DATA = [
   { skill: 'Solar PV Inverter Maintenance', growth: 82, category: 'Renewables' },
   { skill: 'Robotic Welding Cell Operation', growth: 76, category: 'Fabrication' },
   { skill: 'CNC 5-Axis Multi-Tasking', growth: 69, category: 'Precision Machining' },
+];
+
+const DEMO_CANDIDATE_FEEDBACK = [
+  {
+    id: 'ind-fb-1',
+    companyName: 'Apex Industrial Drives Ltd.',
+    location: 'Kolkata Heavy Engineering Corridor',
+    evaluatorRole: 'Plant Maintenance Lead',
+    candidateRole: 'Industrial Electrician',
+    rating: 5,
+    relevance: 'Highly Relevant',
+    date: '18 Aug 2026',
+    comment: 'Candidates recommended through SkillSync matched our benchmark for three-phase motor rewinding and circuit diagnostics. Onboarding duration dropped by 45%.',
+    verifiedSkills: ['Motor Rewinding', 'Multimeter Diagnostics', 'Circuit Testing'],
+    hiringDecision: 'Candidate Hired',
+  },
+  {
+    id: 'ind-fb-2',
+    companyName: 'Bengal GreenTech EV Motors',
+    location: 'Durgapur Industrial Complex',
+    evaluatorRole: 'Production Engineering Lead',
+    candidateRole: 'EV Powertrain Technician',
+    rating: 4,
+    relevance: 'Very Relevant',
+    date: '02 Aug 2026',
+    comment: 'Trainees showed strong electrical safety discipline and harness routing skills. Additional training on battery thermal management would make them fully plug-and-play.',
+    verifiedSkills: ['Battery Pack Wiring', 'Electrical Safety Protocols'],
+    hiringDecision: 'Interview Cleared',
+  },
+  {
+    id: 'ind-fb-3',
+    companyName: 'Eastern Precision Tooling Works',
+    location: 'Howrah Engineering Hub',
+    evaluatorRole: 'Shop Floor Operations Manager',
+    candidateRole: 'CNC Machinist & Fitter',
+    rating: 5,
+    relevance: 'Highly Relevant',
+    date: '20 Jul 2026',
+    comment: 'Exceptional blueprint reading accuracy and tolerance inspection techniques. Candidate was operating machines independently from week two.',
+    verifiedSkills: ['G-Code Programming', 'Blueprint Reading', 'Precision Vernier'],
+    hiringDecision: 'Candidate Hired',
+  },
 ];
 
 export default function IndustryDashboardPreview() {
@@ -664,6 +708,175 @@ export default function IndustryDashboardPreview() {
           >
             <Mail size={16} /> Contact Candidates · Coming Soon
           </button>
+        </section>
+
+        {/* Candidate Feedback Demo Section */}
+        <section style={{ ...panelStyle, marginTop: '1.5rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.25rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.1rem',
+                  margin: '0 0 0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                <MessageSquare size={18} color="#581C87" />
+                Candidate Readiness Reviews & Industry Feedback
+              </h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem' }}>
+                Employer evaluations and candidate skill match assessments submitted by plant and engineering leads.
+              </p>
+            </div>
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#6B21A8',
+                background: '#FAF5FF',
+                border: '1px solid #E9D5FF',
+                padding: '0.3rem 0.65rem',
+                borderRadius: '999px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              Representative Demo Data · Read-Only
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+              gap: '1rem',
+            }}
+          >
+            {DEMO_CANDIDATE_FEEDBACK.map((fb) => (
+              <div
+                key={fb.id}
+                style={{
+                  background: '#FAF5FF',
+                  borderRadius: '10px',
+                  border: '1px solid #E9D5FF',
+                  padding: '1.1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                    <div>
+                      <strong style={{ fontSize: '0.9rem', color: '#1E293B', display: 'block' }}>
+                        {fb.companyName}
+                      </strong>
+                      <small style={{ color: '#64748B', fontSize: '0.76rem' }}>
+                        {fb.evaluatorRole} · {fb.location}
+                      </small>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: '#6B21A8',
+                        background: '#F3E8FF',
+                        padding: '0.2rem 0.45rem',
+                        borderRadius: '4px',
+                        border: '1px solid #D8B4FE',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {fb.hiringDecision}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={14}
+                          fill={star <= fb.rating ? '#F59E0B' : 'none'}
+                          color={star <= fb.rating ? '#F59E0B' : '#CBD5E1'}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '4px',
+                        background: '#EDE9FE',
+                        color: '#5B21B6',
+                      }}
+                    >
+                      {fb.relevance}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8', marginLeft: 'auto' }}>
+                      {fb.date}
+                    </span>
+                  </div>
+
+                  <div style={{ marginBottom: '0.4rem', fontSize: '0.76rem', color: '#6B21A8', fontWeight: 600 }}>
+                    Assessed Role: <span style={{ color: '#1E293B' }}>{fb.candidateRole}</span>
+                  </div>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.83rem',
+                      color: '#334155',
+                      lineHeight: 1.45,
+                      fontStyle: 'italic',
+                      background: '#FFFFFF',
+                      padding: '0.65rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid #F3E8FF',
+                    }}
+                  >
+                    &ldquo;{fb.comment}&rdquo;
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#475569' }}>
+                    Verified Competencies:
+                  </span>
+                  {fb.verifiedSkills.map((sk) => (
+                    <span
+                      key={sk}
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        background: '#FFFFFF',
+                        color: '#6B21A8',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '4px',
+                        border: '1px solid #E9D5FF',
+                      }}
+                    >
+                      {sk}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
     </div>

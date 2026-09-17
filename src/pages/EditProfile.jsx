@@ -24,7 +24,10 @@ import {
   Pencil,
   Camera,
   Check,
+  Star,
+  MessageSquare,
 } from 'lucide-react';
+import { getUserFeedbackHistory } from '../lib/feedback';
 import { PRESET_AVATARS, getAvatarUrl } from '../data/avatars';
 
 const SUGGESTED_SKILLS = {
@@ -141,6 +144,10 @@ export default function EditProfile() {
   const [initialSkills, setInitialSkills] = useState([]);
   const [customSkillInput, setCustomSkillInput] = useState('');
 
+  // User feedback history state
+  const [feedbackHistory, setFeedbackHistory] = useState([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+
   // Load user profile and existing skills
   useEffect(() => {
     let isMounted = true;
@@ -188,6 +195,20 @@ export default function EditProfile() {
           const allowedSkills = new Set(getRoleSkills(activeRole));
           setSkills(userSkillsData.filter((skill) => allowedSkills.has(skill)));
           setInitialSkills(userSkillsData.filter((skill) => allowedSkills.has(skill)));
+        }
+
+        // Load user's feedback history (isolated to active user)
+        setLoadingFeedback(true);
+        try {
+          const historyRes = await getUserFeedbackHistory(user.id);
+          const list = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
+          if (isMounted) {
+            setFeedbackHistory(list);
+          }
+        } catch (feedErr) {
+          console.warn('[EditProfile] Error loading feedback history:', feedErr);
+        } finally {
+          if (isMounted) setLoadingFeedback(false);
         }
       } catch (err) {
         console.error('[EditProfile] Error loading profile data:', err);
@@ -553,13 +574,22 @@ export default function EditProfile() {
           style={{
             width: '100%',
             maxWidth: '680px',
-            background: '#ffffff',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
-            border: '1px solid #e2e8f0',
-            padding: 'clamp(1.25rem, 4vw, 2rem)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
           }}
         >
+          <div
+            style={{
+              width: '100%',
+              background: '#ffffff',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
+              border: '1px solid #e2e8f0',
+              padding: 'clamp(1.25rem, 4vw, 2rem)',
+              boxSizing: 'border-box',
+            }}
+          >
           {/* Header Title */}
           <div style={{ marginBottom: '1.75rem' }}>
             <h1
@@ -1502,7 +1532,265 @@ export default function EditProfile() {
             </div>
           </form>
         </div>
-      </main>
-    </div>
-  );
+
+        {/* User Feedback History Section */}
+        <div
+          id="user-feedback-history-section"
+          style={{
+            width: '100%',
+            background: '#ffffff',
+            borderRadius: '16px',
+            boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
+            border: '1px solid #e2e8f0',
+            padding: 'clamp(1.25rem, 4vw, 2rem)',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.25rem',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.2rem',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  margin: '0 0 0.25rem 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <MessageSquare size={19} color="#0E4A32" />
+                Your Feedback History
+              </h2>
+              <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0 }}>
+                Past reviews and skill feedback you&apos;ve shared with SkillSync.
+              </p>
+            </div>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: '#047857',
+                background: '#ecfdf5',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '9999px',
+              }}
+            >
+              {feedbackHistory.length} {feedbackHistory.length === 1 ? 'Review' : 'Reviews'}
+            </span>
+          </div>
+
+          {loadingFeedback ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2rem 0',
+                color: '#64748b',
+                gap: '0.5rem',
+              }}
+            >
+              <Loader2 size={20} className="animate-spin" color="#10b981" />
+              <span style={{ fontSize: '0.85rem' }}>Loading feedback history...</span>
+            </div>
+          ) : feedbackHistory.length === 0 ? (
+            <div
+              style={{
+                padding: '2rem 1.5rem',
+                textAlign: 'center',
+                background: '#f8fafc',
+                borderRadius: '12px',
+                border: '1px dashed #cbd5e1',
+                color: '#64748b',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 0.75rem auto',
+                  color: '#64748b',
+                }}
+              >
+                <MessageSquare size={18} />
+              </div>
+              <p style={{ margin: '0 0 0.4rem 0', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                No feedback submitted yet
+              </p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', maxWidth: '380px', marginInline: 'auto' }}>
+                Share your experience with courses and skill recommendations from your Dashboard to see your reviews listed here.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {feedbackHistory.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    padding: '1.1rem',
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      {[1, 2, 3, 4, 5].map((starVal) => (
+                        <Star
+                          key={starVal}
+                          size={16}
+                          fill={starVal <= (item.overall_rating || 0) ? '#f59e0b' : 'none'}
+                          color={starVal <= (item.overall_rating || 0) ? '#f59e0b' : '#cbd5e1'}
+                        />
+                      ))}
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', marginLeft: '0.35rem' }}>
+                        {item.overall_rating}/5
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      {item.relevance_rating && (
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '6px',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #dbeafe',
+                          }}
+                        >
+                          {item.relevance_rating}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                        {item.created_at
+                          ? new Date(item.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : 'Recent'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {item.written_feedback && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.875rem',
+                        color: '#334155',
+                        lineHeight: 1.5,
+                        background: '#ffffff',
+                        padding: '0.75rem 0.9rem',
+                        borderRadius: '8px',
+                        border: '1px solid #edf2f7',
+                      }}
+                    >
+                      &ldquo;{item.written_feedback}&rdquo;
+                    </p>
+                  )}
+
+                  {item.suggestions && (
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>
+                      <strong>Suggestion:</strong> {item.suggestions}
+                    </p>
+                  )}
+
+                  {((item.skills_improved && item.skills_improved.length > 0) ||
+                    (item.skills_still_needed && item.skills_still_needed.length > 0)) && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.4rem',
+                        paddingTop: '0.35rem',
+                        borderTop: '1px solid #e2e8f0',
+                      }}
+                    >
+                      {item.skills_improved && item.skills_improved.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#047857' }}>
+                            Skills Improved:
+                          </span>
+                          {item.skills_improved.map((skill) => (
+                            <span
+                              key={skill}
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                background: '#ecfdf5',
+                                color: '#065f46',
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '6px',
+                                border: '1px solid #a7f3d0',
+                              }}
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {item.skills_still_needed && item.skills_still_needed.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#b45309' }}>
+                            Still Needed:
+                          </span>
+                          {item.skills_still_needed.map((skill) => (
+                            <span
+                              key={skill}
+                              style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                background: '#fffbeb',
+                                color: '#92400e',
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '6px',
+                                border: '1px solid #fde68a',
+                              }}
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
+  </div>
+);
 }

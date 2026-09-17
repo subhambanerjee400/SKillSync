@@ -13,6 +13,8 @@ import {
   ArrowDownRight,
   Minus,
   Sparkles,
+  Star,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import RoleSwitcher from '../components/RoleSwitcher';
@@ -32,6 +34,42 @@ const INITIAL_EMERGING_SKILLS = [
   { id: 3, name: 'PLC Automation & Ladder Logic', trade: 'Electrical', trend: 'Rising', trainees: 52 },
   { id: 4, name: 'CNC Multi-Axis G-Code Programming', trade: 'Fitter / Machinist', trend: 'Stable', trainees: 44 },
   { id: 5, name: 'Manual Arc Pipe Welding (2G/3G)', trade: 'Welder', trend: 'Declining', trainees: 22 },
+];
+
+const DEMO_LEARNER_FEEDBACK = [
+  {
+    id: 'fb-1',
+    traineeName: 'Ananya Sen',
+    trade: 'Electrician Trade (Govt. ITI Tollygunge)',
+    rating: 5,
+    relevance: 'Highly Relevant',
+    date: '12 Aug 2026',
+    comment: 'The hands-on switchgear diagnostics and AC/DC motor winding labs directly prepared me for the state power utility apprentice interview.',
+    skillsGained: ['Circuit Testing', 'Wiring & Cabling', 'Multimeter Diagnostics'],
+    recommendationImpact: 'Secured Apprenticeship',
+  },
+  {
+    id: 'fb-2',
+    traineeName: 'Rahul Karmakar',
+    trade: 'Industrial Automation (DGT Pilot Batch)',
+    rating: 4,
+    relevance: 'Very Relevant',
+    date: '28 Jul 2026',
+    comment: 'Curriculum matches real factory line requirements. Would recommend adding additional weekend practice hours on SCADA and PLC ladder logic simulations.',
+    skillsGained: ['PLC Automation', 'Ladder Logic Basics'],
+    recommendationImpact: 'Curriculum Upgraded',
+  },
+  {
+    id: 'fb-3',
+    traineeName: 'Priya Mondal',
+    trade: 'Solar PV & Renewables (Kolkata Center)',
+    rating: 5,
+    relevance: 'Highly Relevant',
+    date: '05 Jul 2026',
+    comment: 'In-depth training on rooftop solar array mounting and OSHA safety compliances gave our whole batch confidence during field placement drives.',
+    skillsGained: ['Solar PV Installation', 'Electrical Safety & OSHA'],
+    recommendationImpact: 'Certified & Placed',
+  },
 ];
 
 export default function InstitutionDashboardPreview() {
@@ -617,6 +655,169 @@ export default function InstitutionDashboardPreview() {
                   {t.status}
                 </small>
                 <p style={{ color: '#64748b', fontSize: '0.8rem', margin: '0.35rem 0 0' }}>{t.note}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Learner Feedback Demo Section */}
+        <section style={{ ...panelStyle, marginTop: '1.5rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1.25rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  fontSize: '1.1rem',
+                  margin: '0 0 0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                <MessageSquare size={18} color="#0e4a32" />
+                Learner Feedback & Course Reviews
+              </h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem' }}>
+                Verified trainee responses regarding curriculum relevance and skill mastery after completing recommended pathways.
+              </p>
+            </div>
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#047857',
+                background: '#ECFDF5',
+                border: '1px solid #A7F3D0',
+                padding: '0.3rem 0.65rem',
+                borderRadius: '999px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+            >
+              Representative Demo Data · Read-Only
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+              gap: '1rem',
+            }}
+          >
+            {DEMO_LEARNER_FEEDBACK.map((fb) => (
+              <div
+                key={fb.id}
+                style={{
+                  background: '#F8FAFC',
+                  borderRadius: '10px',
+                  border: '1px solid #E2E8F0',
+                  padding: '1.1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '0.85rem',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                    <div>
+                      <strong style={{ fontSize: '0.9rem', color: '#1E293B', display: 'block' }}>
+                        {fb.traineeName}
+                      </strong>
+                      <small style={{ color: '#64748B', fontSize: '0.76rem' }}>{fb.trade}</small>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        color: '#047857',
+                        background: '#ECFDF5',
+                        padding: '0.2rem 0.45rem',
+                        borderRadius: '4px',
+                        border: '1px solid #A7F3D0',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {fb.recommendationImpact}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={14}
+                          fill={star <= fb.rating ? '#F59E0B' : 'none'}
+                          color={star <= fb.rating ? '#F59E0B' : '#CBD5E1'}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '4px',
+                        background: '#EFF6FF',
+                        color: '#1D4ED8',
+                      }}
+                    >
+                      {fb.relevance}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8', marginLeft: 'auto' }}>
+                      {fb.date}
+                    </span>
+                  </div>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: '0.83rem',
+                      color: '#334155',
+                      lineHeight: 1.45,
+                      fontStyle: 'italic',
+                      background: '#FFFFFF',
+                      padding: '0.65rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid #F1F5F9',
+                    }}
+                  >
+                    &ldquo;{fb.comment}&rdquo;
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#475569' }}>
+                    Skills Mastered:
+                  </span>
+                  {fb.skillsGained.map((sk) => (
+                    <span
+                      key={sk}
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        background: '#ECFDF5',
+                        color: '#065F46',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '4px',
+                        border: '1px solid #D1FAE5',
+                      }}
+                    >
+                      {sk}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

@@ -18,10 +18,11 @@ import ScoreSimulator from '../components/ScoreSimulator';
 import SkillRoadmap from '../components/SkillRoadmap';
 import RecommendationPanel from '../components/RecommendationPanel';
 import SkillDetailModal from '../components/SkillDetailModal';
+import FeedbackModal from '../components/FeedbackModal';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import RoleSwitcher from '../components/RoleSwitcher';
 import { generateRoadmap } from '../lib/roadmap';
-import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu, AlertTriangle, RefreshCw, MessageSquare } from 'lucide-react';
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
@@ -40,6 +41,7 @@ export default function Dashboard() {
   const [activeSkillModal, setActiveSkillModal] = useState(null); // 'matched' | 'missing' | null
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeHeaderPopover, setActiveHeaderPopover] = useState(null); // 'mail' | 'notifications' | null
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   // Dismiss header popovers on outside click
   useEffect(() => {
@@ -932,6 +934,31 @@ export default function Dashboard() {
                 <Download size={15} />
                 <span>{t('dashboard.exportReport')}</span>
               </button>
+
+              <button
+                type="button"
+                id="dashboard-give-feedback-btn"
+                onClick={() => setIsFeedbackModalOpen(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '9999px',
+                  background: '#ECFDF5',
+                  color: '#047857',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  border: '1px solid #A7F3D0',
+                  cursor: 'pointer',
+                  transition: 'all 150ms ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#D1FAE5')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#ECFDF5')}
+              >
+                <MessageSquare size={15} />
+                <span>Give Feedback</span>
+              </button>
             </div>
           </div>
 
@@ -969,6 +996,71 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Job Seeker Recommendation Feedback Callout Card */}
+          <div
+            id="dashboard-feedback-card"
+            style={{
+              background: 'linear-gradient(135deg, #06281B 0%, #0E4A32 100%)',
+              borderRadius: '16px',
+              padding: '1.25rem 1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              color: '#FFFFFF',
+              marginTop: '1.5rem',
+              boxShadow: '0 4px 18px rgba(14, 74, 50, 0.15)',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: 'rgba(52, 211, 153, 0.18)',
+                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#34D399',
+                  flexShrink: 0,
+                }}
+              >
+                <MessageSquare size={22} />
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 0.2rem', fontSize: '1rem', fontWeight: 700 }}>
+                  How are your recommended training pathways working out?
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#A7F3D0' }}>
+                  Rate training relevance, track skills you improved, and help calibrate recommendations for other {effectiveProfile?.role || 'job seekers'}.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFeedbackModalOpen(true)}
+              style={{
+                padding: '0.65rem 1.35rem',
+                borderRadius: '9999px',
+                background: '#34D399',
+                color: '#06281B',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                border: 'none',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'transform 120ms ease, background 150ms ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#6EE7B7')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#34D399')}
+            >
+              Give Feedback
+            </button>
+          </div>
+
           {/* Skill Detail Modal */}
           <SkillDetailModal
             isOpen={Boolean(activeSkillModal)}
@@ -978,6 +1070,16 @@ export default function Dashboard() {
             role={effectiveProfile?.role}
             segment={effectiveProfile?.segment}
             userLocation={effectiveProfile?.location}
+          />
+
+          {/* Job Seeker Feedback Modal */}
+          <FeedbackModal
+            isOpen={isFeedbackModalOpen}
+            onClose={() => setIsFeedbackModalOpen(false)}
+            userId={user?.id}
+            userSkills={analysis?.userSkills || []}
+            missingSkills={rawMissingSkills || []}
+            role={effectiveProfile?.role || 'Target Role'}
           />
         </main>
       </div>
