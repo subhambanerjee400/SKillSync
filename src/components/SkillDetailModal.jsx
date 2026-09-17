@@ -87,9 +87,13 @@ export default function SkillDetailModal({
           : null;
 
         const chosen = cityMatch || matchingInstitutes[0];
+        const typeLabel =
+          chosen.type?.includes('Institute') || chosen.type?.includes('ITI')
+            ? chosen.type
+            : `${chosen.type || 'Government'} Institute`;
         return {
           title: chosen.name,
-          provider: `${chosen.type} Institute • ${chosen.city}`,
+          provider: `${typeLabel} • ${chosen.city}`,
           link: chosen.website,
           isInstitute: true,
         };

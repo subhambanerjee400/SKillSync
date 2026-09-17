@@ -33,7 +33,9 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [analysis, setAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
+  const [govtPortals, setGovtPortals] = useState([]);
   const [recNotice, setRecNotice] = useState(null);
+  const [recDisclaimer, setRecDisclaimer] = useState(null);
   const [activeSkillModal, setActiveSkillModal] = useState(null); // 'matched' | 'missing' | null
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeHeaderPopover, setActiveHeaderPopover] = useState(null); // 'mail' | 'notifications' | null
@@ -177,7 +179,9 @@ export default function Dashboard() {
           if (activeProf.segment === 'Trade') {
             const tradeResult = generateTradeRecommendations(result.missingSkills, activeProf);
             setRecommendations(tradeResult.recommendations || []);
+            setGovtPortals(tradeResult.govtPortals || []);
             setRecNotice(tradeResult.notice || null);
+            setRecDisclaimer(tradeResult.disclaimer || null);
           } else {
             const courseResult = generateCourseRecommendations(
               result.missingSkills,
@@ -185,7 +189,9 @@ export default function Dashboard() {
               activeProf.role
             );
             setRecommendations(courseResult || []);
+            setGovtPortals([]);
             setRecNotice(null);
+            setRecDisclaimer(null);
           }
         } else {
           setLoadError(
@@ -401,6 +407,15 @@ export default function Dashboard() {
         return matchTitle || matchDesc || matchCovered || matchOffered;
       })
     : recommendations;
+
+  const filteredGovtPortals = filterQuery
+    ? govtPortals.filter((p) => {
+        const matchTitle = p.title?.toLowerCase().includes(filterQuery);
+        const matchDesc = p.description?.toLowerCase().includes(filterQuery);
+        const matchTag = p.relevanceTag?.toLowerCase().includes(filterQuery);
+        return matchTitle || matchDesc || matchTag;
+      })
+    : govtPortals;
 
   return (
     <div
@@ -945,6 +960,8 @@ export default function Dashboard() {
             <RecommendationPanel
               recommendations={filteredRecommendations}
               notice={recNotice}
+              disclaimer={recDisclaimer}
+              govtPortals={filteredGovtPortals}
             />
           </div>
 
