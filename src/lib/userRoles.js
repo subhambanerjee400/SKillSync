@@ -111,7 +111,7 @@ export function normalizeRole(role) {
  */
 export function getRoleDisplayLabel(role) {
   const norm = normalizeRole(role);
-  if (norm === USER_ROLES.INSTITUTION) return 'Training Institution';
+  if (norm === USER_ROLES.INSTITUTION) return 'Institution/Organization';
   if (norm === USER_ROLES.INDUSTRY_PARTNER) return 'Industry Partner';
   return 'Job Seeker';
 }

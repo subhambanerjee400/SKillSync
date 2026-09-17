@@ -268,9 +268,9 @@ export default function InstitutionDashboardPreview() {
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#047857', textTransform: 'uppercase' }}>
               Curriculum & Analytics
             </span>
-            <h1 style={{ margin: '0.25rem 0', fontSize: '1.8rem' }}>Training Institution Portal</h1>
+            <h1 style={{ margin: '0.25rem 0', fontSize: '1.8rem' }}>Institution / Organization Portal</h1>
             <p style={{ margin: 0, color: '#64748b' }}>
-              Institution workspace for {user?.user_metadata?.institution_name || user?.user_metadata?.full_name || 'your training institution'}.
+              Institution workspace for {user?.user_metadata?.institution_name || user?.user_metadata?.full_name || 'your institution/organization'}.
             </p>
           </div>
           <span

@@ -393,7 +393,7 @@ export default function RoleSelect() {
                   color: '#FFFFFF',
                 }}
               >
-                Training Institution
+                Institution/Organization
               </h2>
               <p
                 style={{

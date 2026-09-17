@@ -310,7 +310,7 @@ export default function Signup() {
                 {t('auth.roleJobSeeker') || 'Job Seeker'}
               </option>
               <option value={USER_ROLES.INSTITUTION}>
-                {t('auth.roleInstitution') || 'Training Institution'}
+                {t('auth.roleInstitution') || 'Institution/Organization'}
               </option>
               <option value={USER_ROLES.INDUSTRY_PARTNER}>
                 {t('auth.roleIndustryPartner') || 'Industry Partner (Company / Hiring Employer)'}

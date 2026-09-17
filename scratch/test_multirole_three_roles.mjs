@@ -53,7 +53,7 @@ assert(normalizeRole('student') === 'job_seeker', 'normalizeRole("student") -> j
 assert(normalizeRole('user') === 'job_seeker', 'normalizeRole("user") -> job_seeker');
 
 assert(getRoleDisplayLabel('job_seeker') === 'Job Seeker', 'getRoleDisplayLabel("job_seeker")');
-assert(getRoleDisplayLabel('institution') === 'Training Institution', 'getRoleDisplayLabel("institution")');
+assert(getRoleDisplayLabel('institution') === 'Institution/Organization', 'getRoleDisplayLabel("institution")');
 assert(getRoleDisplayLabel('industry_partner') === 'Industry Partner', 'getRoleDisplayLabel("industry_partner")');
 
 // -----------------------------------------------------------------------------
