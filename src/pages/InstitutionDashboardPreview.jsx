@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, LogOut, TrendingUp, Users } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import RoleSwitcher from '../components/RoleSwitcher';
 import { INSTITUTION_CANDIDATES, INSTITUTION_SKILL_GAPS, INSTITUTION_TRENDS } from '../data/institutionDemoData';
 
 const panelStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)' };
@@ -15,7 +16,10 @@ export default function InstitutionDashboardPreview() {
     <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
       <header style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '1rem clamp(1rem, 4vw, 3rem)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}><span style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: '#0e4a32' }}><Building2 size={19} color="#fff" /></span><strong>SkillSync</strong><span style={{ color: '#64748b' }}>Institution portal</span></div>
-        <button type="button" onClick={handleLogout} style={{ color: '#475569', display: 'inline-flex', gap: '0.4rem', alignItems: 'center' }}><LogOut size={16} />Sign out</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <RoleSwitcher variant="light" />
+          <button type="button" onClick={handleLogout} style={{ color: '#475569', display: 'inline-flex', gap: '0.4rem', alignItems: 'center', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}><LogOut size={16} />Sign out</button>
+        </div>
       </header>
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '2rem clamp(1rem, 4vw, 2.5rem)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>

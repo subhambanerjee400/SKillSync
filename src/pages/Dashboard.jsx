@@ -19,6 +19,7 @@ import SkillRoadmap from '../components/SkillRoadmap';
 import RecommendationPanel from '../components/RecommendationPanel';
 import SkillDetailModal from '../components/SkillDetailModal';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import RoleSwitcher from '../components/RoleSwitcher';
 import { generateRoadmap } from '../lib/roadmap';
 import { Search, Bell, Mail, Plus, LogOut, Download, Loader2, Sparkles, Menu, AlertTriangle, RefreshCw } from 'lucide-react';
 
@@ -573,8 +574,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Header Elements: LanguageSwitcher, Mail, Bell, Profile, Logout */}
+          {/* Right Header Elements: RoleSwitcher, LanguageSwitcher, Mail, Bell, Profile, Logout */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}>
+            {/* Role Switcher (Multi-role accounts) */}
+            <RoleSwitcher variant="light" />
+
             {/* Language Switcher */}
             <LanguageSwitcher variant="light" compact />
 

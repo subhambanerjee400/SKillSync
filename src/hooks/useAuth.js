@@ -3,6 +3,17 @@ import { supabase } from '../lib/supabase';
 import { saveAccountRoleLocally } from '../lib/accountRole';
 import { getUserProfile, saveProfileLocally } from '../lib/profile';
 import { getAvatarUrl } from '../data/avatars';
+import {
+  getUserRoles,
+  addUserRole,
+  getSessionActiveRole,
+  setSessionActiveRole,
+  clearSessionActiveRole,
+  getPendingRole,
+  clearPendingRole,
+  normalizeRole,
+  USER_ROLES,
+} from '../lib/userRoles';
 
 const AuthContext = createContext(null);
 
@@ -51,6 +62,8 @@ function getOrCreateFallbackUserId(email) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [userRoles, setUserRoles] = useState([USER_ROLES.JOB_SEEKER]);
+  const [activeRole, setActiveRole] = useState(() => getSessionActiveRole(USER_ROLES.JOB_SEEKER));
   const [profile, setProfile] = useState(() => {
     try {
       const savedUserStr = localStorage.getItem('skillsync_user');
@@ -69,6 +82,31 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true); // Only true during initial session check
   const [error, setError] = useState(null);
 
+  // Sync roles whenever user changes
+  const refreshUserRoles = useCallback(async (uid) => {
+    const targetId = uid || user?.id;
+    if (!targetId) {
+      setUserRoles([USER_ROLES.JOB_SEEKER]);
+      return [USER_ROLES.JOB_SEEKER];
+    }
+    try {
+      const roles = await getUserRoles(targetId);
+      setUserRoles(roles);
+
+      const sessionChoice = getSessionActiveRole();
+      if (sessionChoice && roles.includes(sessionChoice)) {
+        setActiveRole(sessionChoice);
+      } else if (roles.length === 1) {
+        setActiveRole(roles[0]);
+        setSessionActiveRole(roles[0]);
+      }
+      return roles;
+    } catch (err) {
+      console.warn('refreshUserRoles error:', err);
+      return [USER_ROLES.JOB_SEEKER];
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -81,9 +119,11 @@ export function AuthProvider({ children }) {
         }
 
         if (mounted && data?.session?.user) {
+          const authed = data.session.user;
           setSession(data.session);
-          setUser(data.session.user);
-          setRole(data.session.user.user_metadata?.role || 'student');
+          setUser(authed);
+          setRole(authed.user_metadata?.role || 'student');
+          await refreshUserRoles(authed.id);
           setLoading(false);
           return;
         }
@@ -98,6 +138,7 @@ export function AuthProvider({ children }) {
                 setUser(savedUser);
                 setRole(savedUser.user_metadata?.role || savedUser.role || 'student');
                 setSession({ user: savedUser });
+                await refreshUserRoles(savedUser.id);
                 setLoading(false);
                 return;
               }
@@ -128,10 +169,15 @@ export function AuthProvider({ children }) {
         setUser(newSession.user);
         setRole(newSession.user.user_metadata?.role || 'student');
         localStorage.setItem('skillsync_user', JSON.stringify(newSession.user));
+        await refreshUserRoles(newSession.user.id);
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
         setRole('student');
+        setUserRoles([USER_ROLES.JOB_SEEKER]);
+        setActiveRole(USER_ROLES.JOB_SEEKER);
+        clearSessionActiveRole();
+        clearPendingRole();
         localStorage.removeItem('skillsync_user');
       }
     });
@@ -140,7 +186,7 @@ export function AuthProvider({ children }) {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [refreshUserRoles]);
 
   // Fetch and refresh active profile from Supabase profiles table
   const refreshProfile = useCallback(async (targetUserId) => {
@@ -183,10 +229,11 @@ export function AuthProvider({ children }) {
 
       // 2. Fetch fresh copy from Supabase profiles table
       refreshProfile(user.id);
+      refreshUserRoles(user.id);
     } else {
       setProfile(null);
     }
-  }, [user?.id, refreshProfile]);
+  }, [user?.id, refreshProfile, refreshUserRoles]);
 
   // Update profile across shared context, Supabase, and localStorage
   const updateProfile = useCallback(async (updates) => {
@@ -263,11 +310,28 @@ export function AuthProvider({ children }) {
     return getAvatarUrl(rawAvatar, userName);
   }, [profile?.avatar_url, user, userName]);
 
+  // Switch the user's active session role (job_seeker <-> institution)
+  const switchActiveRole = useCallback((newRole) => {
+    const normalized = normalizeRole(newRole);
+    setActiveRole(normalized);
+    setSessionActiveRole(normalized);
+    return normalized;
+  }, []);
+
+  // Add a new role to the current user
+  const addRoleToUser = useCallback(async (roleToAdd, metadata = {}) => {
+    if (!user?.id) return [USER_ROLES.JOB_SEEKER];
+    const updated = await addUserRole(user.id, roleToAdd, metadata);
+    setUserRoles(updated);
+    return updated;
+  }, [user?.id]);
+
   const login = useCallback(async (email, password) => {
     setError(null);
     try {
+      const cleanEmail = email.trim();
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
 
@@ -276,61 +340,84 @@ export function AuthProvider({ children }) {
         // If Supabase returns an invalid key error (placeholder key), provide fallback session
         if (authError.message?.toLowerCase().includes('api key') || authError.status === 401) {
           console.warn('Supabase returned API key error. Using development session:', authError.message);
-          const userId = getOrCreateFallbackUserId(email);
-          let savedAccountRole = 'user';
+          const userId = getOrCreateFallbackUserId(cleanEmail);
+          let savedAccountRole = 'job_seeker';
           try {
             const str = localStorage.getItem('skillsync_accounts');
             if (str) {
               const reg = JSON.parse(str);
               if (reg[userId]) savedAccountRole = reg[userId];
-              else if (reg[email.trim().toLowerCase()]) savedAccountRole = reg[email.trim().toLowerCase()];
+              else if (reg[cleanEmail.toLowerCase()]) savedAccountRole = reg[cleanEmail.toLowerCase()];
             }
           } catch (e) { }
 
           const fallbackUser = {
             id: userId,
-            email: email.trim(),
+            email: cleanEmail,
             role: 'student',
             user_metadata: {
-              full_name: email.split('@')[0],
+              full_name: cleanEmail.split('@')[0],
               role: 'student',
               account_role: savedAccountRole,
             },
           };
+
+          // Apply pending role if present
+          const pending = getPendingRole();
+          if (pending && (!pending.email || pending.email.toLowerCase() === cleanEmail.toLowerCase())) {
+            await addUserRole(userId, pending.role, pending);
+            clearPendingRole();
+          }
+
+          const roles = await getUserRoles(userId);
+          setUserRoles(roles);
+
+          const lastChoice = getSessionActiveRole();
+          if (lastChoice && roles.includes(lastChoice)) {
+            setActiveRole(lastChoice);
+          } else if (roles.length === 1) {
+            setActiveRole(roles[0]);
+            setSessionActiveRole(roles[0]);
+          } else {
+            setActiveRole(null);
+          }
+
           setUser(fallbackUser);
           setSession({ user: fallbackUser });
           localStorage.setItem('skillsync_user', JSON.stringify(fallbackUser));
-          return { user: fallbackUser, session: { user: fallbackUser } };
+          return { user: fallbackUser, session: { user: fallbackUser }, roles };
         }
         throw authError;
       }
 
       if (data?.user) {
         let authedUser = data.user;
-        const currentRole = authedUser.user_metadata?.account_role;
-        if (!currentRole) {
-          try {
-            const { data: accData } = await supabase
-              .from('accounts')
-              .select('account_role')
-              .eq('user_id', authedUser.id)
-              .maybeSingle();
-            if (accData?.account_role) {
-              authedUser = {
-                ...authedUser,
-                user_metadata: {
-                  ...(authedUser.user_metadata || {}),
-                  account_role: accData.account_role,
-                },
-              };
-            }
-          } catch (e) { }
+
+        // Apply pending role if present
+        const pending = getPendingRole();
+        if (pending && (!pending.email || pending.email.toLowerCase() === cleanEmail.toLowerCase())) {
+          await addUserRole(authedUser.id, pending.role, pending);
+          clearPendingRole();
         }
+
+        const roles = await getUserRoles(authedUser.id);
+        setUserRoles(roles);
+
+        const lastChoice = getSessionActiveRole();
+        if (lastChoice && roles.includes(lastChoice)) {
+          setActiveRole(lastChoice);
+        } else if (roles.length === 1) {
+          setActiveRole(roles[0]);
+          setSessionActiveRole(roles[0]);
+        } else {
+          setActiveRole(null);
+        }
+
         setUser(authedUser);
         setSession(data.session);
         setRole(authedUser.user_metadata?.role || 'student');
         localStorage.setItem('skillsync_user', JSON.stringify(authedUser));
-        return { ...data, user: authedUser };
+        return { ...data, user: authedUser, roles };
       }
 
       return data;
@@ -343,19 +430,23 @@ export function AuthProvider({ children }) {
 
   const signup = useCallback(async (email, password, metadata = {}) => {
     setError(null);
-    const chosenRole = metadata.account_role || metadata.accountRole || 'user';
-    saveAccountRoleLocally(email.trim().toLowerCase(), chosenRole);
+    const rawRole = metadata.account_role || metadata.accountRole || USER_ROLES.JOB_SEEKER;
+    const chosenRole = normalizeRole(rawRole);
+    const cleanEmail = email.trim().toLowerCase();
+    saveAccountRoleLocally(cleanEmail, chosenRole);
 
     try {
       const { data, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password,
         options: {
           data: {
             full_name: metadata.full_name || metadata.fullName || 'Member',
             role: metadata.role || 'student',
             account_role: chosenRole,
-            org_name: metadata.org_name || metadata.orgName || '',
+            institution_name: metadata.institution_name || metadata.org_name || '',
+            registration_number: metadata.registration_number || '',
+            org_name: metadata.org_name || metadata.institution_name || '',
             target_role: metadata.target_role || metadata.targetRole || '',
           },
         },
@@ -364,23 +455,31 @@ export function AuthProvider({ children }) {
       if (authError) {
         if (authError.message?.toLowerCase().includes('api key') || authError.status === 401) {
           console.warn('Supabase returned API key error. Using development signup:', authError.message);
-          const userId = getOrCreateFallbackUserId(email);
+          const userId = getOrCreateFallbackUserId(cleanEmail);
           saveAccountRoleLocally(userId, chosenRole);
           const fallbackUser = {
             id: userId,
-            email: email.trim(),
+            email: cleanEmail,
             role: metadata.role || 'student',
             user_metadata: {
-              full_name: metadata.full_name || metadata.fullName || email.split('@')[0],
+              full_name: metadata.full_name || metadata.fullName || cleanEmail.split('@')[0],
               role: metadata.role || 'student',
               account_role: chosenRole,
-              org_name: metadata.org_name || metadata.orgName || '',
+              institution_name: metadata.institution_name || metadata.org_name || '',
+              registration_number: metadata.registration_number || '',
+              org_name: metadata.org_name || metadata.institution_name || '',
             },
           };
+
+          const roles = await addUserRole(userId, chosenRole, metadata);
+          setUserRoles(roles);
+          setActiveRole(chosenRole);
+          setSessionActiveRole(chosenRole);
+
           setUser(fallbackUser);
           setSession({ user: fallbackUser });
           localStorage.setItem('skillsync_user', JSON.stringify(fallbackUser));
-          return { user: fallbackUser, session: { user: fallbackUser } };
+          return { user: fallbackUser, session: { user: fallbackUser }, roles };
         }
         throw authError;
       }
@@ -395,6 +494,11 @@ export function AuthProvider({ children }) {
         } catch (accErr) {
           console.warn('Supabase accounts upsert warning:', accErr?.message);
         }
+
+        const roles = await addUserRole(data.user.id, chosenRole, metadata);
+        setUserRoles(roles);
+        setActiveRole(chosenRole);
+        setSessionActiveRole(chosenRole);
 
         setUser(data.user);
         setSession(data.session);
@@ -419,6 +523,10 @@ export function AuthProvider({ children }) {
       setSession(null);
       setProfile(null);
       setRole('student');
+      setUserRoles([USER_ROLES.JOB_SEEKER]);
+      setActiveRole(USER_ROLES.JOB_SEEKER);
+      clearSessionActiveRole();
+      clearPendingRole();
       localStorage.removeItem('skillsync_user');
     }
   }, []);
@@ -431,6 +539,11 @@ export function AuthProvider({ children }) {
     user,
     session,
     role,
+    userRoles,
+    activeRole,
+    switchActiveRole,
+    addRoleToUser,
+    refreshUserRoles,
     profile,
     profileLoading,
     userName,
@@ -448,6 +561,11 @@ export function AuthProvider({ children }) {
     user,
     session,
     role,
+    userRoles,
+    activeRole,
+    switchActiveRole,
+    addRoleToUser,
+    refreshUserRoles,
     profile,
     profileLoading,
     userName,

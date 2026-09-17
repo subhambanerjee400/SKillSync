@@ -9,8 +9,10 @@ import Dashboard from './pages/Dashboard';
 import EditProfile from './pages/EditProfile';
 import InstitutionDashboardPreview from './pages/InstitutionDashboardPreview';
 import IndustryDashboardPreview from './pages/IndustryDashboardPreview';
+import RoleSelect from './pages/RoleSelect';
 import Landing from './pages/Landing';
 import { getAccountHomePath, getAccountRole } from './lib/accountRole';
+import { normalizeRole, USER_ROLES } from './lib/userRoles';
 import { Loader2 } from 'lucide-react';
 
 // Route Guard: Accessible only to authenticated users
@@ -47,7 +49,7 @@ function ProtectedRoute({ children }) {
 
 // Route Guard: Accessible only to unauthenticated visitors
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, userRoles, activeRole, loading } = useAuth();
 
   if (loading) {
     return (
@@ -71,19 +73,19 @@ function PublicRoute({ children }) {
   }
 
   if (user) {
-    return <Navigate to={getAccountHomePath(user)} replace />;
+    if (userRoles && userRoles.length > 1 && !activeRole) {
+      return <Navigate to="/role-select" replace />;
+    }
+    return <Navigate to={getAccountHomePath(user, activeRole)} replace />;
   }
 
   return children;
 }
 
 // Route Guard for /onboarding:
-// After a successful login, before rendering the onboarding form, checks Supabase for
-// an existing row in the profiles table matching this user's id.
-// If a profile already exists: skips onboarding and redirects straight to /dashboard.
-// If no profile exists yet (first-time user): shows the onboarding form.
+// Checks if profile exists for job seeker. If profile already exists, redirects to /dashboard.
 function OnboardingRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, userRoles, activeRole, loading } = useAuth();
   const [checking, setChecking] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
 
@@ -145,8 +147,9 @@ function OnboardingRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (getAccountRole(user) !== 'user') {
-    return <Navigate to={getAccountHomePath(user)} replace />;
+  const hasJobSeekerRole = userRoles?.some((r) => normalizeRole(r) === USER_ROLES.JOB_SEEKER);
+  if (!hasJobSeekerRole) {
+    return <Navigate to={getAccountHomePath(user, activeRole)} replace />;
   }
 
   if (hasProfile) {
@@ -157,13 +160,37 @@ function OnboardingRoute({ children }) {
 }
 
 function AccountRoleRoute({ accountRole, children }) {
-  const { user, loading } = useAuth();
+  const { user, userRoles, activeRole, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f8fafc', color: '#64748b' }}>Verifying session...</div>;
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#f8fafc',
+          color: '#64748b',
+        }}
+      >
+        <Loader2 size={28} className="animate-spin" color="#10B981" />
+      </div>
+    );
   }
+
   if (!user) return <Navigate to="/login" replace />;
-  if (getAccountRole(user) !== accountRole) return <Navigate to={getAccountHomePath(user)} replace />;
+
+  const targetRole = normalizeRole(accountRole);
+  const hasTargetRole = userRoles?.some((r) => normalizeRole(r) === targetRole);
+
+  // If user doesn't possess this role, route to their accessible dashboard or role selection
+  if (!hasTargetRole) {
+    if (userRoles && userRoles.length > 1 && !activeRole) {
+      return <Navigate to="/role-select" replace />;
+    }
+    return <Navigate to={getAccountHomePath(user, activeRole)} replace />;
+  }
+
   return children;
 }
 
@@ -189,6 +216,14 @@ export default function App() {
             }
           />
           <Route
+            path="/role-select"
+            element={
+              <ProtectedRoute>
+                <RoleSelect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/onboarding"
             element={
               <OnboardingRoute>
@@ -199,7 +234,7 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <AccountRoleRoute accountRole="user">
+              <AccountRoleRoute accountRole="job_seeker">
                 <Dashboard />
               </AccountRoleRoute>
             }
@@ -207,13 +242,27 @@ export default function App() {
           <Route
             path="/edit-profile"
             element={
-              <AccountRoleRoute accountRole="user">
+              <AccountRoleRoute accountRole="job_seeker">
                 <EditProfile />
               </AccountRoleRoute>
             }
           />
-          <Route path="/institution-dashboard" element={<AccountRoleRoute accountRole="institution"><InstitutionDashboardPreview /></AccountRoleRoute>} />
-          <Route path="/industry-dashboard" element={<AccountRoleRoute accountRole="industry"><IndustryDashboardPreview /></AccountRoleRoute>} />
+          <Route
+            path="/institution-dashboard"
+            element={
+              <AccountRoleRoute accountRole="institution">
+                <InstitutionDashboardPreview />
+              </AccountRoleRoute>
+            }
+          />
+          <Route
+            path="/industry-dashboard"
+            element={
+              <AccountRoleRoute accountRole="industry">
+                <IndustryDashboardPreview />
+              </AccountRoleRoute>
+            }
+          />
           {/* Landing Page (Entry point before login/signup) */}
           <Route path="/" element={<Landing />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -40,6 +40,15 @@ CREATE TABLE public.accounts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- User roles table: supports multiple roles (job_seeker + institution) per single account
+CREATE TABLE public.user_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('job_seeker', 'institution')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_user_role UNIQUE (user_id, role)
+);
+
 -- 2. User Skills Table (normalized: one row per user skill)
 CREATE TABLE public.user_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,6 +72,7 @@ CREATE TABLE public.score_history (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.score_history ENABLE ROW LEVEL SECURITY;
 
@@ -104,6 +114,19 @@ CREATE POLICY "Users can update own account"
     FOR UPDATE
     TO authenticated
     USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Explicit RLS Policies for "user_roles"
+CREATE POLICY "Users can select own roles"
+    ON public.user_roles
+    FOR SELECT
+    TO authenticated
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own roles"
+    ON public.user_roles
+    FOR INSERT
+    TO authenticated
     WITH CHECK (auth.uid() = user_id);
 
 -- Explicit RLS Policies for "user_skills"
