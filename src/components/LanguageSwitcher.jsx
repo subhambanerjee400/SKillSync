@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../i18n/languages';
 
-const DROPDOWN_WIDTH = 168; // px — must match the width style below
+const DROPDOWN_WIDTH = 168; // px
 
 export default function LanguageSwitcher({ variant = 'light', compact = false }) {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  // 'left' | 'right' — computed on open so the panel never clips the viewport
-  const [dropdownSide, setDropdownSide] = useState('right');
+  // 'left' (align="start") | 'right' (align="end") — defaults to 'left' so it aligns under the button opening rightward
+  const [dropdownSide, setDropdownSide] = useState('left');
 
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
@@ -21,27 +21,44 @@ export default function LanguageSwitcher({ variant = 'light', compact = false })
 
   const isDark = variant === 'dark';
 
-  // On every open, decide whether the panel should anchor left or right
-  // to stay fully within the viewport on narrow screens.
-  const handleOpen = () => {
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceRight = window.innerWidth - rect.left; // space to the right of the button's left edge
-      const spaceLeft  = rect.right;                    // space to the left of the button's right edge
+  // Dynamic collision and boundary detection:
+  // Default to align="start" (left: 0, opening rightward).
+  // If opening rightward would collide with the right viewport boundary, flip to align="end" (right: 0).
+  const updateDropdownAlignment = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const padding = 16; // minimum safety margin from viewport edges
 
-      // Prefer right-aligned (right:0) if there's enough room on the left side of the button,
-      // otherwise left-aligned (left:0) so it opens to the right.
-      if (spaceLeft >= DROPDOWN_WIDTH + 8) {
-        setDropdownSide('right');
-      } else if (spaceRight >= DROPDOWN_WIDTH + 8) {
-        setDropdownSide('left');
-      } else {
-        // Not enough room either way — clamp to whichever side has more space
-        setDropdownSide(spaceRight >= spaceLeft ? 'left' : 'right');
-      }
+    const fitsRight = rect.left + DROPDOWN_WIDTH <= vw - padding;
+    const fitsLeft = rect.right - DROPDOWN_WIDTH >= padding;
+
+    if (fitsRight) {
+      // align="start": button's left edge aligns with dropdown's left edge (opens rightward)
+      setDropdownSide('left');
+    } else if (fitsLeft) {
+      // align="end": button's right edge aligns with dropdown's right edge (opens leftward)
+      setDropdownSide('right');
+    } else {
+      // Very small screen: choose side with maximum available space
+      setDropdownSide(rect.left < vw / 2 ? 'left' : 'right');
+    }
+  }, []);
+
+  const handleOpen = () => {
+    if (!isOpen) {
+      updateDropdownAlignment();
     }
     setIsOpen((prev) => !prev);
   };
+
+  // Re-check collision on window resize while open
+  useEffect(() => {
+    if (!isOpen) return;
+    updateDropdownAlignment();
+    window.addEventListener('resize', updateDropdownAlignment);
+    return () => window.removeEventListener('resize', updateDropdownAlignment);
+  }, [isOpen, updateDropdownAlignment]);
 
   // Close on outside click or Escape
   useEffect(() => {
@@ -71,12 +88,6 @@ export default function LanguageSwitcher({ variant = 'light', compact = false })
     }
     setIsOpen(false);
   };
-
-  // Build the horizontal anchor for the dropdown
-  const dropdownPositionStyle =
-    dropdownSide === 'right'
-      ? { right: 0 }   // panel's right edge aligns with button's right edge
-      : { left: 0 };   // panel's left edge aligns with button's left edge
 
   return (
     <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
@@ -123,10 +134,10 @@ export default function LanguageSwitcher({ variant = 'light', compact = false })
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            ...dropdownPositionStyle,
+            left: dropdownSide === 'left' ? 0 : 'auto',
+            right: dropdownSide === 'right' ? 0 : 'auto',
             width: `${DROPDOWN_WIDTH}px`,
-            // Clamp so panel never extends beyond the viewport on either side
-            maxWidth: 'calc(100vw - 16px)',
+            maxWidth: 'calc(100vw - 32px)',
             background: isDark ? 'rgba(15, 23, 42, 0.96)' : '#FFFFFF',
             borderRadius: '12px',
             border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #E5E7EB',
